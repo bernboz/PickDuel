@@ -1,14 +1,14 @@
 using PickDuel.Domain.Enums;
+using PickDuel.Domain.Common;
 
 namespace PickDuel.Domain.Entities;
 
-public class League
+public class League : Entity
 {
     
     private const int MAX_MEMBERS = 32;
 
     public string Name { get; private set; }
-    public Guid Id { get; private set; }
     private readonly List<User> _members = new();
     public IReadOnlyCollection<User> Members => _members;    
     public DateTime CreatedAt { get; private set; }
@@ -25,7 +25,6 @@ public class League
     {
         this.Name = name;
         this.Sport = sport;
-        this.Id = Guid.NewGuid();
         this.CreatedAt = DateTime.UtcNow;
         
         _members.Add(owner);
