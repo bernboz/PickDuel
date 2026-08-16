@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="PickDuel.Api/PickDuel.Api.csproj" />
+  <Project Path="PickDuel.Application/PickDuel.Application.csproj" />
+  <Project Path="PickDuel.Domain/PickDuel.Domain.csproj" />
+  <Project Path="PickDuel.Infrastructure/PickDuel.Infrastructure.csproj" />
+  <Project Path="PickDuel.Tests/PickDuel.Tests.csproj" />
+</Solution>
