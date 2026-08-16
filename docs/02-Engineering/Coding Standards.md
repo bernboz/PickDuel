@@ -1,8 +1,8 @@
-# Sports Prediction Game - Coding Standards
+# Pick Duel - Coding Standards
 
 ## 1. Overview
 
-This document defines coding standards used throughout the Sports Prediction Game project.
+This document defines coding standards used throughout the Pick Duel project.
 
 The goal is to create code that is:
 

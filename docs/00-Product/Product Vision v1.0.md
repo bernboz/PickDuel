@@ -1,8 +1,8 @@
-# Sports Prediction Game - Product Vision v1.0
+# Pick Duel - Product Vision v1.0
 
 ## 1. Product Overview
 
-Sports Prediction Game is a competitive sports prediction platform where users compete against friends through head-to-head prediction leagues.
+Pick Duel is a competitive sports prediction platform where users compete against friends through head-to-head prediction leagues.
 
 Users create or join leagues, make predictions on NFL and NBA games, earn or lose rating points based on accuracy, and compete throughout a season to become the top predictor.
 
@@ -19,7 +19,7 @@ Current sports prediction experiences are often:
 - Missing meaningful competition between friends
 - Lacking long-term engagement
 
-Sports Prediction Game creates a more competitive and engaging experience by allowing users to directly compete against friends through rankings, leagues, and rating systems.
+Pick Duel creates a more competitive and engaging experience by allowing users to directly compete against friends through rankings, leagues, and rating systems.
 
 ---
 

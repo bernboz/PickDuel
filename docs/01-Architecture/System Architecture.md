@@ -1,8 +1,8 @@
-# Sports Prediction Game - System Architecture
+# Pick Duel - System Architecture
 
 ## 1. Architecture Overview
 
-Sports Prediction Game will use a modern full-stack architecture designed for scalability, maintainability, and industry relevance.
+Pick Duel will use a modern full-stack architecture designed for scalability, maintainability, and industry relevance.
 
 The application will consist of:
 

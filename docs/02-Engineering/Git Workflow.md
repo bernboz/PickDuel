@@ -1,8 +1,8 @@
-# Sports Prediction Game - Git Workflow
+# Pick Duel - Git Workflow
 
 ## 1. Overview
 
-This document defines the Git workflow used for the Sports Prediction Game project.
+This document defines the Git workflow used for the Pick Duel project.
 
 The goal is to maintain a clean, organized development process similar to professional software teams.
 

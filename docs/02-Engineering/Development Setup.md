@@ -1,4 +1,4 @@
-# Sports Prediction Game - Development Setup
+# Pick Duel - Development Setup
 
 ## 1. Overview
 

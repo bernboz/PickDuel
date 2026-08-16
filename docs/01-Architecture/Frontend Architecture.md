@@ -1,4 +1,4 @@
-# Sports Prediction Game - Frontend Architecture
+# Pick Duel - Frontend Architecture
 
 ## 1. Overview
 

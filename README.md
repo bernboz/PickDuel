@@ -1,6 +1,6 @@
-# Sports Prediction Game
+# Pick Duel
 
-A competitive sports prediction platform where users compete against friends through head-to-head prediction leagues.
+PickDuel is a competitive sports prediction platform where users compete against friends through head-to-head prediction leagues.
 
 Users predict NFL and NBA games, earn or lose rating points based on accuracy, and compete throughout a season to become the top predictor.
 
