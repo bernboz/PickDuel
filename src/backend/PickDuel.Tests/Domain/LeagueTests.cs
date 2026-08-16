@@ -136,4 +136,23 @@ public class LeagueTests
             league.AddMember(owner)
         );
     }
+    
+    [Test]
+    public void NewLeague_ShouldSetOwner()
+    {
+        var owner = new User(
+            "Bob",
+            "Smith",
+            "bob@test.com",
+            "bob"
+        );
+
+        var league = new League(
+            "NFL League",
+            SportType.NFL,
+            owner
+        );
+
+        Assert.That(league.Owner, Is.EqualTo(owner));
+    }
 }

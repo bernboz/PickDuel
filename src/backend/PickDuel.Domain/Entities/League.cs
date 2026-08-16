@@ -12,8 +12,8 @@ public class League : Entity
     private readonly List<User> _members = new();
     public IReadOnlyCollection<User> Members => _members;    
     public DateTime CreatedAt { get; private set; }
-    
     public SportType Sport { get; private set; }
+    public User Owner { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the League class with the specified name.
@@ -26,6 +26,7 @@ public class League : Entity
         this.Name = name;
         this.Sport = sport;
         this.CreatedAt = DateTime.UtcNow;
+        this.Owner = owner;
         
         _members.Add(owner);
     }
