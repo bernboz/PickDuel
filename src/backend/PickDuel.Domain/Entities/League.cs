@@ -1,12 +1,13 @@
 using PickDuel.Domain.Enums;
 using PickDuel.Domain.Common;
+using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Domain.Entities;
 
 public class League : Entity
 {
     
-    private const int MAX_MEMBERS = 32;
+    private const int MaxMembers = 32;
 
     public string Name { get; private set; }
     private readonly List<User> _members = new();
@@ -14,6 +15,7 @@ public class League : Entity
     public DateTime CreatedAt { get; private set; }
     public SportType Sport { get; private set; }
     public User Owner { get; private set; }
+    public ScoringSettings ScoringSettings { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the League class with the specified name.
@@ -21,13 +23,32 @@ public class League : Entity
     /// <param name="name">The name of the league.</param>
     /// <param name="sport">The type of sport</param>
     /// <param name="owner">The creator of the league</param>
-    public League(string name, SportType sport, User owner)
+    /// <param name="scoringSettings">Scoring settings for the league</param>
+    public League(string name, SportType sport, User owner, ScoringSettings? scoringSettings = null)
     {
-        this.Name = name;
-        this.Sport = sport;
-        this.CreatedAt = DateTime.UtcNow;
-        this.Owner = owner;
-        
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(
+                "League name is required.",
+                nameof(name));
+        }
+
+        if (owner == null)
+        {
+            throw new ArgumentNullException(nameof(owner));
+        }
+
+        Name = name;
+        Sport = sport;
+        Owner = owner;
+
+        ScoringSettings = scoringSettings ??
+                          new ScoringSettings(
+                              winnerPoints: 1,
+                              exactScorePoints: 5);
+
+        CreatedAt = DateTime.UtcNow;
+
         _members.Add(owner);
     }
 
@@ -36,7 +57,12 @@ public class League : Entity
     /// </summary>
     public void AddMember(User user)
     {
-        if (_members.Count >= MAX_MEMBERS)
+        if (user == null)
+        {
+            throw new ArgumentNullException(nameof(user));
+        }
+        
+        if (_members.Count >= MaxMembers)
         {
             throw new InvalidOperationException(
                 "League has reached the maximum number of members."
@@ -51,5 +77,43 @@ public class League : Entity
         }
 
         _members.Add(user);
+    }
+    
+    /// <summary>
+    /// Updates the league scoring settings.
+    /// </summary>
+    public void UpdateScoringSettings(ScoringSettings scoringSettings)
+    {
+        if (scoringSettings == null)
+        {
+            throw new ArgumentNullException(nameof(scoringSettings));
+        }
+
+        ScoringSettings = scoringSettings;
+    }
+    
+    /// <summary>
+    /// Transfers league ownership to another member.
+    /// </summary>
+    public void TransferOwnership(User newOwner)
+    {
+        if (newOwner == null)
+        {
+            throw new ArgumentNullException(nameof(newOwner));
+        }
+
+        if (!_members.Contains(newOwner))
+        {
+            throw new InvalidOperationException(
+                "New owner must already be a member of the league.");
+        }
+
+        if (Owner == newOwner)
+        {
+            throw new InvalidOperationException(
+                "User is already the owner of the league.");
+        }
+
+        Owner = newOwner;
     }
 }
