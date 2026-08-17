@@ -36,4 +36,31 @@ public class GameTests
                 DateTime.UtcNow
             ));
     }
+    
+    [Test]
+    public void HasStarted_ShouldReturnFalse_WhenGameIsInFuture()
+    {
+        var game = new Game(
+            "Chiefs",
+            "Bills",
+            DateTime.UtcNow.AddHours(1),
+            DateTime.UtcNow.AddHours(4)
+        );
+
+        Assert.That(game.HasStarted, Is.False);
+    }
+
+
+    [Test]
+    public void HasStarted_ShouldReturnTrue_WhenGameHasStarted()
+    {
+        var game = new Game(
+            "Chiefs",
+            "Bills",
+            DateTime.UtcNow.AddHours(-4),
+            DateTime.UtcNow.AddHours(-1)
+        );
+
+        Assert.That(game.HasStarted, Is.True);
+    }
 }

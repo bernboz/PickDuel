@@ -98,7 +98,8 @@ public class PickScoringServiceTests
             user,
             league,
             game,
-            "Chiefs"
+            "Chiefs",
+            3
         );
 
         var result = new GameResult(
@@ -108,9 +109,16 @@ public class PickScoringServiceTests
             21
         );
 
+        var odds = new GameOdds(
+            game,
+            0.75m,
+            0.25m
+        );
+        
         return new PickEvaluationContext(
             pick,
-            result
+            result,
+            odds
         );
     }
 

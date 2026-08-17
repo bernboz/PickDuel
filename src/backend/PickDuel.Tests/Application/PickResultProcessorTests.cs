@@ -30,7 +30,8 @@ public class PickResultProcessorTests
             user,
             league,
             game,
-            game.HomeTeam
+            game.HomeTeam,
+            3
         );
 
         var gameResult = new GameResult(
@@ -40,9 +41,16 @@ public class PickResultProcessorTests
             10
         );
 
+        var odds = new GameOdds(
+            game,
+            0.75m,
+            0.25m
+        );
+
         var context = new PickEvaluationContext(
             pick,
-            gameResult
+            gameResult,
+            odds
         );
 
 
@@ -75,7 +83,8 @@ public class PickResultProcessorTests
             user,
             league,
             game,
-            game.HomeTeam
+            game.HomeTeam,
+            3
         );
 
         var gameResult = new GameResult(
@@ -85,9 +94,16 @@ public class PickResultProcessorTests
             10
         );
 
+        var odds = new GameOdds(
+            game,
+            0.75m,
+            0.25m
+        );
+
         var context = new PickEvaluationContext(
             pick,
-            gameResult
+            gameResult,
+            odds
         );
 
 

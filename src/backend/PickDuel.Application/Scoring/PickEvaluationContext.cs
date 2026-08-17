@@ -5,10 +5,11 @@ namespace PickDuel.Application.Scoring;
 public class PickEvaluationContext
 {
     public Pick Pick { get; }
-
     public GameResult GameResult { get; }
+    public GameOdds GameOdds { get; }
 
-    public PickEvaluationContext(Pick pick, GameResult gameResult)
+
+    public PickEvaluationContext(Pick pick, GameResult gameResult, GameOdds gameOdds)
     {
         if (pick == null)
         {
@@ -26,7 +27,13 @@ public class PickEvaluationContext
                 "The pick and game result must reference the same game.");
         }
 
+        if (gameOdds == null)
+        {
+            throw new ArgumentNullException(nameof(gameOdds));
+        }
+
         Pick = pick;
         GameResult = gameResult;
+        GameOdds = gameOdds;
     }
 }
