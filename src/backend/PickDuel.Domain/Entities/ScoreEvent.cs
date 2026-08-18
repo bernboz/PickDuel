@@ -18,23 +18,47 @@ public class ScoreEvent : Entity
     public DateTime CreatedAt { get; private set; }
 
 
-    public ScoreEvent(User user, League league, int points, ScoreEventType type, string description)
+    /// <summary>
+    /// Creates a score event representing the result of a completed pick evaluation.
+    /// </summary>
+    /// <param name="user">User receiving the score event.</param>
+    /// <param name="league">League where the event occurred.</param>
+    /// <param name="points">Points awarded or deducted.</param>
+    /// <param name="type">Category of scoring event.</param>
+    /// <param name="description">Human-readable explanation of the event.</param>
+    public ScoreEvent(
+        User user,
+        League league,
+        int points,
+        ScoreEventType type,
+        string description)
     {
-        if (user is null)
-        {
-            throw new ArgumentNullException(nameof(user));
-        }
-
-        if (league is null)
-        {
-            throw new ArgumentNullException(nameof(league));
-        }
+        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(league);
 
         if (string.IsNullOrWhiteSpace(description))
         {
-            throw new ArgumentException("Description cannot be empty.", nameof(description));
+            throw new ArgumentException(
+                "Description cannot be empty.",
+                nameof(description)
+            );
         }
-
+        
+        if (type == ScoreEventType.Penalty && points >= 0)
+        {
+            throw new ArgumentException(
+                "Penalty events must have negative points.",
+                nameof(points)
+            );
+        }
+        
+        if (type != ScoreEventType.Penalty && points < 0)
+        {
+            throw new ArgumentException(
+                "Only penalty events can have negative points.",
+                nameof(points)
+            );
+        }
 
         User = user;
         League = league;

@@ -8,45 +8,16 @@ public class ScoringSettingsTests
     [Test]
     public void NewScoringSettings_ShouldInitializeCorrectly()
     {
-        var settings = new ScoringSettings(
-            2,
-            5
-        );
+        var settings = CreateSettings();
 
         Assert.Multiple(() =>
         {
-            Assert.That(
-                settings.WinnerPoints,
-                Is.EqualTo(2)
-            );
-
-            Assert.That(
-                settings.ExactScorePoints,
-                Is.EqualTo(5)
-            );
-        });
-    }
-
-
-    [Test]
-    public void NewScoringSettings_ShouldAllowZeroPointValues()
-    {
-        var settings = new ScoringSettings(
-            0,
-            0
-        );
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(
-                settings.WinnerPoints,
-                Is.Zero
-            );
-
-            Assert.That(
-                settings.ExactScorePoints,
-                Is.Zero
-            );
+            Assert.That(settings.WinnerPoints, Is.EqualTo(10));
+            Assert.That(settings.ExactScorePoints, Is.EqualTo(50));
+            Assert.That(settings.ScoreAccuracyBonus, Is.EqualTo(25));
+            Assert.That(settings.ScoreAccuracyPenalty, Is.EqualTo(-50));
+            Assert.That(settings.ScoreTolerance, Is.EqualTo(5));
+            Assert.That(settings.MaxScoreDifferencePenalty, Is.EqualTo(10));
         });
     }
 
@@ -57,7 +28,11 @@ public class ScoringSettingsTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ScoringSettings(
                 -1,
-                5
+                50,
+                25,
+                -50,
+                5,
+                10
             ));
     }
 
@@ -67,31 +42,85 @@ public class ScoringSettingsTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ScoringSettings(
-                1,
-                -5
+                10,
+                -50,
+                25,
+                -50,
+                5,
+                10
             ));
     }
 
 
     [Test]
-    public void NewScoringSettings_ShouldStoreLargeValidValues()
+    public void NewScoringSettings_ShouldThrow_WhenAccuracyBonusIsNegative()
     {
-        var settings = new ScoringSettings(
-            1000,
-            5000
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ScoringSettings(
+                10,
+                50,
+                -25,
+                -50,
+                5,
+                10
+            ));
+    }
+
+
+    [Test]
+    public void NewScoringSettings_ShouldThrow_WhenAccuracyPenaltyIsPositive()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ScoringSettings(
+                10,
+                50,
+                25,
+                50,
+                5,
+                10
+            ));
+    }
+
+
+    [Test]
+    public void NewScoringSettings_ShouldThrow_WhenScoreToleranceIsNegative()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ScoringSettings(
+                10,
+                50,
+                25,
+                -50,
+                -1,
+                10
+            ));
+    }
+
+
+    [Test]
+    public void NewScoringSettings_ShouldThrow_WhenMaxScoreDifferencePenaltyIsNegative()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ScoringSettings(
+                10,
+                50,
+                25,
+                -50,
+                5,
+                -10
+            ));
+    }
+
+
+    private static ScoringSettings CreateSettings()
+    {
+        return new ScoringSettings(
+            10,
+            50,
+            25,
+            -50,
+            5,
+            10
         );
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(
-                settings.WinnerPoints,
-                Is.EqualTo(1000)
-            );
-
-            Assert.That(
-                settings.ExactScorePoints,
-                Is.EqualTo(5000)
-            );
-        });
     }
 }

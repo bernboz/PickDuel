@@ -6,5 +6,6 @@ public enum ScoreEventType
     ExactScore,
     ScoreDifference,
     Bonus,
-    Penalty
+    Penalty,
+    Neutral
 }

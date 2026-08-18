@@ -2,6 +2,7 @@ using NUnit.Framework;
 using PickDuel.Domain.ValueObjects;
 using PickDuel.Domain.Entities;
 using PickDuel.Tests.Common;
+using PickDuel.Domain.Entities.Predictions;
 
 namespace PickDuel.Tests.Domain;
 

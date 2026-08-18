@@ -7,77 +7,53 @@ public class PickResultProcessor
 {
     private readonly PickScoringService _pickScoringService;
 
-
+    private readonly ScoreEventFactory _scoreEventFactory;
+    
     /// <summary>
     /// Initializes a new PickResultProcessor with the required scoring service.
     /// </summary>
     /// <param name="pickScoringService">Service used to calculate prediction points.</param>
-    public PickResultProcessor(PickScoringService pickScoringService)
+    /// <param name="scoreEventFactory">ScoreEventFactory to create scoreevents</param>
+    public PickResultProcessor(
+        PickScoringService pickScoringService,
+        ScoreEventFactory scoreEventFactory)
     {
-        if (pickScoringService is null)
-        {
-            throw new ArgumentNullException(nameof(pickScoringService));
-        }
+        ArgumentNullException.ThrowIfNull(pickScoringService);
+        ArgumentNullException.ThrowIfNull(scoreEventFactory);
 
         _pickScoringService = pickScoringService;
+        _scoreEventFactory = scoreEventFactory;
     }
-
-
+    
     /// <summary>
     /// Processes a completed pick evaluation and creates a score event.
     /// </summary>
     /// <param name="context">Context containing the pick, result, and odds information.</param>
-    /// <returns>A ScoreEvent representing the result of the prediction.</returns>
-    public ScoreEvent ProcessPickResult(PickEvaluationContext context)
+    /// <returns>A ScoreEvent representing the prediction outcome.</returns>
+    public ScoreEvent ProcessPickResult(
+        PickEvaluationContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         var points = _pickScoringService.CalculateTotalPoints(context);
 
-        var scoreEventType = points switch
-        {
-            > 0 => ScoreEventType.CorrectWinner,
-            < 0 => ScoreEventType.Penalty,
-            _ => ScoreEventType.CorrectWinner
-        };
-
-        var description = scoreEventType switch
-        {
-            ScoreEventType.CorrectWinner => "Correct winner prediction",
-            ScoreEventType.Penalty => "Incorrect prediction penalty",
-            _ => "Prediction processed"
-        };
-
-        return new ScoreEvent(
-            context.Pick.User,
-            context.Pick.League,
-            points,
-            scoreEventType,
-            description
+        return _scoreEventFactory.Create(
+            context,
+            points
         );
     }
-
-
+    
     /// <summary>
-    /// Applies a score event to update a league standing.
+    /// Applies a completed score event to a league standing.
+    /// Updates points and prediction statistics.
     /// </summary>
-    /// <param name="scoreEvent">Score event containing points and result information.</param>
-    /// <param name="standing">League standing receiving the update.</param>
+    /// <param name="scoreEvent">Score event containing the scoring outcome.</param>
+    /// <param name="standing">League standing to update.</param>
     public void ApplyScoreEvent(ScoreEvent scoreEvent, LeagueStanding standing)
     {
-        if (scoreEvent is null)
-        {
-            throw new ArgumentNullException(nameof(scoreEvent));
-        }
+        ArgumentNullException.ThrowIfNull(scoreEvent);
+        ArgumentNullException.ThrowIfNull(standing);
 
-        if (standing is null)
-        {
-            throw new ArgumentNullException(nameof(standing));
-        }
-
-        standing.ApplyScoreEvent(scoreEvent);
+        standing.AddPoints(scoreEvent.Points);
     }
 }

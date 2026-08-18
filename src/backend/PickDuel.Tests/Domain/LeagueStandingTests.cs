@@ -7,14 +7,25 @@ namespace PickDuel.Tests.Domain;
 public class LeagueStandingTests
 {
     [Test]
-    public void NewLeagueStanding_ShouldInitializeWithZeroStatistics()
+    public void NewLeagueStanding_ShouldInitializeCorrectly()
     {
-        var standing = CreateStanding();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
 
-        Assert.That(standing.TotalPoints, Is.Zero);
-        Assert.That(standing.TotalWins, Is.Zero);
-        Assert.That(standing.TotalLosses, Is.Zero);
-        Assert.That(standing.TotalPicks, Is.Zero);
+        var standing = new LeagueStanding(
+            user,
+            league
+        );
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(standing.User, Is.EqualTo(user));
+            Assert.That(standing.League, Is.EqualTo(league));
+
+            Assert.That(standing.TotalPoints, Is.Zero);
+            Assert.That(standing.MatchupWins, Is.Zero);
+            Assert.That(standing.MatchupLosses, Is.Zero);
+        });
     }
 
 
@@ -25,105 +36,101 @@ public class LeagueStandingTests
 
         standing.AddPoints(50);
 
-        Assert.That(standing.TotalPoints, Is.EqualTo(50));
+        Assert.That(
+            standing.TotalPoints,
+            Is.EqualTo(50)
+        );
     }
 
 
     [Test]
-    public void AddPoints_ShouldAllowNegativeScores()
+    public void AddPoints_ShouldSupportPenalties()
     {
         var standing = CreateStanding();
 
         standing.AddPoints(100);
-        standing.AddPoints(-25);
+        standing.AddPoints(-40);
 
-        Assert.That(standing.TotalPoints, Is.EqualTo(75));
+        Assert.That(
+            standing.TotalPoints,
+            Is.EqualTo(60)
+        );
     }
 
 
     [Test]
-    public void AddPoints_ShouldHandleMultipleScoreEvents()
+    public void AddPoints_ShouldAccumulateMultipleScoringEvents()
     {
         var standing = CreateStanding();
 
-        standing.AddPoints(50);
         standing.AddPoints(25);
+        standing.AddPoints(50);
         standing.AddPoints(-10);
+        standing.AddPoints(5);
 
-        Assert.That(standing.TotalPoints, Is.EqualTo(65));
+        Assert.That(
+            standing.TotalPoints,
+            Is.EqualTo(70)
+        );
     }
 
 
     [Test]
-    public void RecordPredictionResult_ShouldIncreaseWins_WhenPredictionIsCorrect()
+    public void RecordMatchupWin_ShouldIncreaseMatchupWins()
     {
         var standing = CreateStanding();
 
-        standing.RecordPredictionResult(true);
+        standing.RecordMatchupWin();
 
-        Assert.That(standing.TotalWins, Is.EqualTo(1));
-        Assert.That(standing.TotalLosses, Is.Zero);
-        Assert.That(standing.TotalPicks, Is.EqualTo(1));
+        Assert.That(
+            standing.MatchupWins,
+            Is.EqualTo(1)
+        );
     }
 
 
     [Test]
-    public void RecordPredictionResult_ShouldIncreaseLosses_WhenPredictionIsIncorrect()
+    public void RecordMatchupLoss_ShouldIncreaseMatchupLosses()
     {
         var standing = CreateStanding();
 
-        standing.RecordPredictionResult(false);
+        standing.RecordMatchupLoss();
 
-        Assert.That(standing.TotalWins, Is.Zero);
-        Assert.That(standing.TotalLosses, Is.EqualTo(1));
-        Assert.That(standing.TotalPicks, Is.EqualTo(1));
+        Assert.That(
+            standing.MatchupLosses,
+            Is.EqualTo(1)
+        );
     }
 
 
     [Test]
-    public void RecordPredictionResult_ShouldTrackMultiplePredictions()
+    public void RecordMultipleMatchupResults_ShouldMaintainCorrectRecord()
     {
         var standing = CreateStanding();
 
-        standing.RecordPredictionResult(true);
-        standing.RecordPredictionResult(true);
-        standing.RecordPredictionResult(false);
+        standing.RecordMatchupWin();
+        standing.RecordMatchupWin();
+        standing.RecordMatchupLoss();
+        standing.RecordMatchupWin();
+        standing.RecordMatchupLoss();
 
-        Assert.That(standing.TotalWins, Is.EqualTo(2));
-        Assert.That(standing.TotalLosses, Is.EqualTo(1));
-        Assert.That(standing.TotalPicks, Is.EqualTo(3));
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                standing.MatchupWins,
+                Is.EqualTo(3)
+            );
+
+            Assert.That(
+                standing.MatchupLosses,
+                Is.EqualTo(2)
+            );
+        });
     }
 
 
     [Test]
-    public void GetWinPercentage_ShouldReturnCorrectPercentage()
-    {
-        var standing = CreateStanding();
-
-        standing.RecordPredictionResult(true);
-        standing.RecordPredictionResult(true);
-        standing.RecordPredictionResult(false);
-        standing.RecordPredictionResult(true);
-
-        var winPercentage = standing.GetWinPercentage();
-
-        Assert.That(winPercentage, Is.EqualTo(75));
-    }
-
-
-    [Test]
-    public void GetWinPercentage_ShouldReturnZero_WhenNoPredictionsExist()
-    {
-        var standing = CreateStanding();
-
-        var winPercentage = standing.GetWinPercentage();
-
-        Assert.That(winPercentage, Is.Zero);
-    }
-
-
-    [Test]
-    public void CreatingStanding_ShouldRequireUser()
+    public void CreatingStanding_ShouldThrow_WhenUserIsNull()
     {
         var league = TestDataFactory.CreateLeague(
             TestDataFactory.CreateUser()
@@ -138,7 +145,7 @@ public class LeagueStandingTests
 
 
     [Test]
-    public void CreatingStanding_ShouldRequireLeague()
+    public void CreatingStanding_ShouldThrow_WhenLeagueIsNull()
     {
         var user = TestDataFactory.CreateUser();
 

@@ -13,26 +13,56 @@ public class PickResultProcessorTests
     public void Constructor_ShouldThrow_WhenScoringServiceIsNull()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new PickResultProcessor(null!)
-        );
+            new PickResultProcessor(
+                null!,
+                new ScoreEventFactory()
+            ));
+    }
+
+
+    [Test]
+    public void Constructor_ShouldThrow_WhenScoreEventFactoryIsNull()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new PickResultProcessor(
+                CreateScoringService(10),
+                null!
+            ));
     }
 
 
     [Test]
     public void ProcessPickResult_ShouldCreateCorrectWinnerEvent_WhenPredictionIsCorrect()
     {
-        var processor = CreateProcessor(50);
+        var processor = CreateProcessor(10);
         var context = TestDataFactory.CreateCorrectPredictionContext();
 
         var result = processor.ProcessPickResult(context);
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.User, Is.EqualTo(context.Pick.User));
-            Assert.That(result.League, Is.EqualTo(context.Pick.League));
-            Assert.That(result.Points, Is.EqualTo(50));
+            Assert.That(result.Points, Is.EqualTo(10));
             Assert.That(result.Type, Is.EqualTo(ScoreEventType.CorrectWinner));
-            Assert.That(result.Description, Is.EqualTo("Correct winner prediction"));
+            Assert.That(result.Description,
+                Is.EqualTo("Correct winner prediction"));
+        });
+    }
+
+
+    [Test]
+    public void ProcessPickResult_ShouldCreateExactScoreEvent_WhenScorePredictionMatches()
+    {
+        var processor = CreateProcessor(50);
+        var context = TestDataFactory.CreateExactScorePredictionContext();
+
+        var result = processor.ProcessPickResult(context);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Points, Is.EqualTo(50));
+            Assert.That(result.Type, Is.EqualTo(ScoreEventType.ExactScore));
+            Assert.That(result.Description,
+                Is.EqualTo("Exact score prediction"));
         });
     }
 
@@ -49,25 +79,21 @@ public class PickResultProcessorTests
         {
             Assert.That(result.Points, Is.EqualTo(-25));
             Assert.That(result.Type, Is.EqualTo(ScoreEventType.Penalty));
-            Assert.That(result.Description, Is.EqualTo("Incorrect prediction penalty"));
+            Assert.That(result.Description,
+                Is.EqualTo("Incorrect prediction penalty"));
         });
     }
 
 
     [Test]
-    public void ProcessPickResult_ShouldCreateScoreEvent_WhenPointsAreZero()
+    public void ProcessPickResult_ShouldCreateNeutralEvent_WhenPointsAreZero()
     {
         var processor = CreateProcessor(0);
         var context = TestDataFactory.CreateCorrectPredictionContext();
 
         var result = processor.ProcessPickResult(context);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Points, Is.Zero);
-            Assert.That(result.User, Is.EqualTo(context.Pick.User));
-            Assert.That(result.League, Is.EqualTo(context.Pick.League));
-        });
+        Assert.That(result.Type, Is.EqualTo(ScoreEventType.Neutral));
     }
 
 
@@ -83,58 +109,64 @@ public class PickResultProcessorTests
 
 
     [Test]
-    public void ApplyScoreEvent_ShouldIncreaseStandingPoints_WhenEventIsPositive()
+    public void ApplyScoreEvent_ShouldUpdatePoints()
     {
-        var processor = CreateProcessor(50);
-
+        var processor = CreateProcessor(10);
         var standing = CreateStanding();
 
-        var scoreEvent = CreateScoreEvent(50);
-
         processor.ApplyScoreEvent(
-            scoreEvent,
+            CreateScoreEvent(10, ScoreEventType.CorrectWinner),
             standing
         );
 
         Assert.That(
             standing.TotalPoints,
-            Is.EqualTo(50)
+            Is.EqualTo(10)
         );
     }
-
 
     [Test]
-    public void ApplyScoreEvent_ShouldDecreaseStandingPoints_WhenEventIsNegative()
+    public void ApplyScoreEvent_ShouldOnlyUpdatePoints()
     {
-        var processor = CreateProcessor(-25);
-
+        var processor = CreateProcessor(50);
         var standing = CreateStanding();
 
-        var scoreEvent = CreateScoreEvent(-25);
-
         processor.ApplyScoreEvent(
-            scoreEvent,
+            CreateScoreEvent(
+                50,
+                ScoreEventType.ExactScore
+            ),
             standing
         );
 
-        Assert.That(
-            standing.TotalPoints,
-            Is.EqualTo(-25)
-        );
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                standing.TotalPoints,
+                Is.EqualTo(50)
+            );
+
+            Assert.That(
+                standing.MatchupWins,
+                Is.Zero
+            );
+
+            Assert.That(
+                standing.MatchupLosses,
+                Is.Zero
+            );
+        });
     }
-
-
+    
     [Test]
     public void ApplyScoreEvent_ShouldThrow_WhenScoreEventIsNull()
     {
         var processor = CreateProcessor(10);
 
-        var standing = CreateStanding();
-
         Assert.Throws<ArgumentNullException>(() =>
             processor.ApplyScoreEvent(
                 null!,
-                standing
+                CreateStanding()
             ));
     }
 
@@ -144,90 +176,59 @@ public class PickResultProcessorTests
     {
         var processor = CreateProcessor(10);
 
-        var scoreEvent = CreateScoreEvent(10);
-
         Assert.Throws<ArgumentNullException>(() =>
             processor.ApplyScoreEvent(
-                scoreEvent,
+                CreateScoreEvent(10, ScoreEventType.CorrectWinner),
                 null!
             ));
     }
 
 
-    [Test]
-    public void ProcessPickResult_ShouldUseScoringServiceResult()
+    private static PickResultProcessor CreateProcessor(int points)
     {
-        var rule = Substitute.For<IPickScoringRule>();
-
-        var context = TestDataFactory.CreateCorrectPredictionContext();
-
-        rule.CalculatePoints(context)
-            .Returns(75);
-
-        var service = new PickScoringService(
-            new List<IPickScoringRule>
-            {
-                rule
-            });
-
-        var processor = new PickResultProcessor(service);
-
-        var result = processor.ProcessPickResult(context);
-
-        Assert.That(
-            result.Points,
-            Is.EqualTo(75)
+        return new PickResultProcessor(
+            CreateScoringService(points),
+            new ScoreEventFactory()
         );
-
-        rule.Received(1)
-            .CalculatePoints(context);
     }
 
 
-    private static PickResultProcessor CreateProcessor(int points)
+    private static PickScoringService CreateScoringService(int points)
     {
         var rule = Substitute.For<IPickScoringRule>();
 
         rule.CalculatePoints(Arg.Any<PickEvaluationContext>())
             .Returns(points);
 
-        var scoringService = new PickScoringService(
-            new List<IPickScoringRule>
-            {
-                rule
-            });
-
-        return new PickResultProcessor(scoringService);
+        return new PickScoringService(
+            new[] { rule }
+        );
     }
 
 
     private static LeagueStanding CreateStanding()
     {
         var user = TestDataFactory.CreateUser();
-        var league = TestDataFactory.CreateLeague(user);
 
         return new LeagueStanding(
             user,
-            league
+            TestDataFactory.CreateLeague(user)
         );
     }
 
 
-    private static ScoreEvent CreateScoreEvent(int points)
+    private static ScoreEvent CreateScoreEvent(
+        int points,
+        ScoreEventType type)
     {
         var user = TestDataFactory.CreateUser();
-        var league = TestDataFactory.CreateLeague(user);
 
         return new ScoreEvent(
             user,
-            league,
+            TestDataFactory.CreateLeague(user),
             points,
-            points >= 0
-                ? ScoreEventType.CorrectWinner
-                : ScoreEventType.Penalty,
-            points >= 0
-                ? "Correct winner prediction"
-                : "Incorrect prediction penalty"
+            type,
+            "Test score event"
         );
     }
 }

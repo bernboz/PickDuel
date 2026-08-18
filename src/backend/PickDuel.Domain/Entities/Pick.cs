@@ -1,5 +1,6 @@
 using PickDuel.Domain.Common;
 using PickDuel.Domain.ValueObjects;
+using PickDuel.Domain.Entities.Predictions;
 
 namespace PickDuel.Domain.Entities;
 
@@ -21,14 +22,117 @@ public class Pick : Entity
 
 
     /// <summary>
-    /// Creates a pick for the specified team and confidence multiplier.
+    /// Creates a winner prediction pick.
     /// </summary>
-    /// <param name="user">User making the prediction.</param>
-    /// <param name="league">League where the prediction exists.</param>
-    /// <param name="game">Game being predicted.</param>
-    /// <param name="selectedTeam">Team selected by the user.</param>
-    /// <param name="confidenceMultiplier">Confidence value from 1-5.</param>
-    public Pick(User user, League league, Game game, string selectedTeam, int confidenceMultiplier)
+    public Pick(
+        User user,
+        League league,
+        Game game,
+        string selectedTeam,
+        int confidenceMultiplier)
+    {
+        ValidateBasePick(
+            user,
+            league,
+            game,
+            selectedTeam,
+            confidenceMultiplier
+        );
+
+        User = user;
+        League = league;
+        Game = game;
+        SelectedTeam = selectedTeam;
+        ConfidenceMultiplier = confidenceMultiplier;
+        CreatedAt = DateTime.UtcNow;
+    }
+
+
+    /// <summary>
+    /// Creates a pick with an exact score prediction.
+    /// </summary>
+    public Pick(
+        User user,
+        League league,
+        Game game,
+        string selectedTeam,
+        int confidenceMultiplier,
+        ScorePrediction scorePrediction)
+        : this(
+            user,
+            league,
+            game,
+            selectedTeam,
+            confidenceMultiplier)
+    {
+        if (scorePrediction == null)
+        {
+            throw new ArgumentNullException(nameof(scorePrediction));
+        }
+
+        ScorePrediction = scorePrediction;
+    }
+
+
+    /// <summary>
+    /// Changes the confidence multiplier for this pick.
+    /// </summary>
+    public void ChangeConfidence(int newConfidence)
+    {
+        EnsurePickIsEditable();
+
+        ValidateConfidence(newConfidence);
+
+        ConfidenceMultiplier = newConfidence;
+    }
+
+
+    /// <summary>
+    /// Changes the selected team for this pick.
+    /// </summary>
+    public void ChangeSelection(string newTeam)
+    {
+        EnsurePickIsEditable();
+
+        ValidateSelectedTeam(Game, newTeam);
+
+        SelectedTeam = newTeam;
+    }
+
+
+    /// <summary>
+    /// Updates the exact score prediction.
+    /// </summary>
+    public void UpdateScorePrediction(ScorePrediction prediction)
+    {
+        EnsurePickIsEditable();
+
+        if (prediction == null)
+        {
+            throw new ArgumentNullException(nameof(prediction));
+        }
+
+        ScorePrediction = prediction;
+    }
+
+
+    private void EnsurePickIsEditable()
+    {
+        if (Game.HasStarted)
+        {
+            throw new InvalidOperationException(
+                "Pick can no longer be modified because the game has started."
+            );
+        }
+    }
+
+
+    private static void ValidateBasePick(
+        User user,
+        League league,
+        Game game,
+        string selectedTeam,
+        int confidenceMultiplier)
     {
         if (user == null)
         {
@@ -47,83 +151,16 @@ public class Pick : Entity
 
         ValidateSelectedTeam(game, selectedTeam);
         ValidateConfidence(confidenceMultiplier);
-
-        User = user;
-        League = league;
-        Game = game;
-        SelectedTeam = selectedTeam;
-        ConfidenceMultiplier = confidenceMultiplier;
-        CreatedAt = DateTime.UtcNow;
     }
 
 
-    /// <summary>
-    /// Changes the confidence multiplier for this pick.
-    /// </summary>
-    /// <param name="newConfidence">New confidence value from 1-5.</param>
-    public void ChangeConfidence(int newConfidence)
+    private static void ValidateSelectedTeam(
+        Game game,
+        string selectedTeam)
     {
-        EnsurePickIsEditable();
-
-        ValidateConfidence(newConfidence);
-
-        ConfidenceMultiplier = newConfidence;
-    }
-
-
-    /// <summary>
-    /// Changes the selected team for this pick.
-    /// </summary>
-    /// <param name="newTeam">New team selected by the user.</param>
-    public void ChangeSelection(string newTeam)
-    {
-        EnsurePickIsEditable();
-
-        ValidateSelectedTeam(Game, newTeam);
-
-        SelectedTeam = newTeam;
-    }
-
-
-    /// <summary>
-    /// Updates the exact score prediction for this pick.
-    /// </summary>
-    /// <param name="prediction">Predicted score for both teams.</param>
-    public void UpdateScorePrediction(ScorePrediction prediction)
-    {
-        EnsurePickIsEditable();
-
-        if (prediction == null)
-        {
-            throw new ArgumentNullException(nameof(prediction));
-        }
-
-        ScorePrediction = prediction;
-    }
-
-
-    /// <summary>
-    /// Ensures the pick can still be modified before game start.
-    /// </summary>
-    private void EnsurePickIsEditable()
-    {
-        if (Game.HasStarted)
-        {
-            throw new InvalidOperationException(
-                "Pick can no longer be modified because the game has started."
-            );
-        }
-    }
-
-
-    /// <summary>
-    /// Validates that the selected team is part of the game.
-    /// </summary>
-    /// <param name="game">Game being predicted.</param>
-    /// <param name="selectedTeam">Team selected by the user.</param>
-    private static void ValidateSelectedTeam(Game game, string selectedTeam)
-    {
-        if (selectedTeam != game.HomeTeam && selectedTeam != game.AwayTeam)
+        if (string.IsNullOrWhiteSpace(selectedTeam) ||
+            (selectedTeam != game.HomeTeam &&
+             selectedTeam != game.AwayTeam))
         {
             throw new ArgumentException(
                 "Selected team must be part of the game.",
@@ -133,15 +170,15 @@ public class Pick : Entity
     }
 
 
-    /// <summary>
-    /// Validates that confidence is within the allowed range.
-    /// </summary>
-    /// <param name="confidenceMultiplier">Confidence value to validate.</param>
-    private static void ValidateConfidence(int confidenceMultiplier)
+    private static void ValidateConfidence(
+        int confidenceMultiplier)
     {
-        if (confidenceMultiplier < 1 || confidenceMultiplier > 5)
+        if (confidenceMultiplier < 1 ||
+            confidenceMultiplier > 5)
         {
-            throw new ArgumentOutOfRangeException(nameof(confidenceMultiplier));
+            throw new ArgumentOutOfRangeException(
+                nameof(confidenceMultiplier)
+            );
         }
     }
 }

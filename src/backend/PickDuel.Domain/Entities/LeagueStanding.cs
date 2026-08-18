@@ -1,5 +1,4 @@
 using PickDuel.Domain.Common;
-using PickDuel.Domain.Enums;
 
 namespace PickDuel.Domain.Entities;
 
@@ -11,44 +10,44 @@ public class LeagueStanding : Entity
 
     public int TotalPoints { get; private set; }
 
-    public int TotalWins { get; private set; }
+    public int MatchupWins { get; private set; }
 
-    public int TotalLosses { get; private set; }
+    public int MatchupLosses { get; private set; }
 
-    public int TotalPicks { get; private set; }
+    public int MatchupTies { get; private set; }
+
+    public int TotalMatchups =>
+        MatchupWins +
+        MatchupLosses +
+        MatchupTies;
 
 
     /// <summary>
     /// Creates a league standing for a user within a league.
     /// </summary>
-    /// <param name="user">User represented by this standing.</param>
-    /// <param name="league">League associated with this standing.</param>
-    public LeagueStanding(User user, League league)
+    /// <param name="user">User represented by the standing.</param>
+    /// <param name="league">League associated with the standing.</param>
+    public LeagueStanding(
+        User user,
+        League league)
     {
-        if (user is null)
-        {
-            throw new ArgumentNullException(nameof(user));
-        }
-
-        if (league is null)
-        {
-            throw new ArgumentNullException(nameof(league));
-        }
+        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(league);
 
         User = user;
         League = league;
 
         TotalPoints = 0;
-        TotalWins = 0;
-        TotalLosses = 0;
-        TotalPicks = 0;
+
+        MatchupWins = 0;
+        MatchupLosses = 0;
+        MatchupTies = 0;
     }
 
 
     /// <summary>
-    /// Adds points earned from a completed pick result.
+    /// Adds points earned from completed predictions.
     /// </summary>
-    /// <param name="points">Points gained or lost from scoring rules.</param>
     public void AddPoints(int points)
     {
         TotalPoints += points;
@@ -56,64 +55,43 @@ public class LeagueStanding : Entity
 
 
     /// <summary>
-    /// Records the result of a completed prediction.
+    /// Records a head-to-head matchup victory.
     /// </summary>
-    /// <param name="isWinner">Whether the user's prediction was correct.</param>
-    public void RecordPredictionResult(bool isWinner)
+    public void RecordMatchupWin()
     {
-        TotalPicks++;
-
-        if (isWinner)
-        {
-            TotalWins++;
-        }
-        else
-        {
-            TotalLosses++;
-        }
+        MatchupWins++;
     }
 
 
     /// <summary>
-    /// Calculates the user's prediction success percentage.
+    /// Records a head-to-head matchup loss.
     /// </summary>
-    /// <returns>
-    /// Percentage of correct predictions from completed picks.
-    /// </returns>
-    public decimal GetWinPercentage()
+    public void RecordMatchupLoss()
     {
-        if (TotalPicks == 0)
+        MatchupLosses++;
+    }
+
+
+    /// <summary>
+    /// Records a tied head-to-head matchup.
+    /// </summary>
+    public void RecordMatchupTie()
+    {
+        MatchupTies++;
+    }
+
+
+    /// <summary>
+    /// Calculates the user's matchup win percentage.
+    /// </summary>
+    /// <returns>Percentage of matchups won.</returns>
+    public decimal GetMatchupWinPercentage()
+    {
+        if (TotalMatchups == 0)
         {
             return 0;
         }
 
-        return (decimal)TotalWins / TotalPicks * 100;
-    }
-    
-    /// <summary>
-    /// Applies a completed score event to this league standing.
-    /// </summary>
-    /// <param name="scoreEvent">Completed scoring event.</param>
-    public void ApplyScoreEvent(ScoreEvent scoreEvent)
-    {
-        if (scoreEvent is null)
-        {
-            throw new ArgumentNullException(nameof(scoreEvent));
-        }
-
-        TotalPoints += scoreEvent.Points;
-    
-        TotalPicks++;
-
-        switch (scoreEvent.Type)
-        {
-            case ScoreEventType.CorrectWinner:
-                TotalWins++;
-                break;
-
-            case ScoreEventType.Penalty:
-                TotalLosses++;
-                break;
-        }
+        return (decimal)MatchupWins / TotalMatchups * 100;
     }
 }

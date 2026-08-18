@@ -30,7 +30,18 @@ public class PickScoringServiceTests
 
         Assert.That(points, Is.EqualTo(25));
     }
+    
+    [Test]
+    public void CalculateTotalPoints_ShouldReturnZero_WhenNoRulesExist()
+    {
+        var service = CreateService();
 
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        var points = service.CalculateTotalPoints(context);
+
+        Assert.That(points, Is.Zero);
+    }
 
     [Test]
     public void CalculateTotalPoints_ShouldSumPointsFromMultipleRules()

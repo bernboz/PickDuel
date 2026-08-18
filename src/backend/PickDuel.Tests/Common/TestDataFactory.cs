@@ -1,6 +1,8 @@
 using PickDuel.Application.Scoring;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
+using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Tests.Common;
 
@@ -278,6 +280,200 @@ public static class TestDataFactory
             "Bills",
             DateTime.UtcNow.AddHours(-4),
             DateTime.UtcNow.AddHours(-1)
+        );
+    }
+        
+        /// <summary>
+    /// Creates a scoring context where the user's predicted score exactly matches the final game result.
+    /// Used for testing exact score bonus calculations.
+    /// </summary>
+    /// <returns>A PickEvaluationContext containing an exact score prediction.</returns>
+    public static PickEvaluationContext CreateExactScorePredictionContext()
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateGame();
+
+        var pick = CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam
+        );
+
+        pick.UpdateScorePrediction(
+            new ScorePrediction(24, 14)
+        );
+
+        var result = new GameResult(
+            game,
+            GameOutcome.HomeWin,
+            24,
+            14
+        );
+
+        var odds = CreateGameOdds(game);
+
+        return new PickEvaluationContext(
+            pick,
+            result,
+            odds
+        );
+    }
+
+
+    /// <summary>
+    /// Creates a scoring context where the predicted score is within the acceptable accuracy range.
+    /// Used for testing partial score accuracy bonuses.
+    /// </summary>
+    /// <returns>A PickEvaluationContext containing a close score prediction.</returns>
+    public static PickEvaluationContext CreateCloseScorePredictionContext()
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateGame();
+
+        var pick = CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam
+        );
+
+        // Within 5 points of both scores
+        pick.UpdateScorePrediction(
+            new ScorePrediction(27, 18)
+        );
+
+        var result = new GameResult(
+            game,
+            GameOutcome.HomeWin,
+            24,
+            14
+        );
+
+        var odds = CreateGameOdds(game);
+
+        return new PickEvaluationContext(
+            pick,
+            result,
+            odds
+        );
+    }
+
+
+    /// <summary>
+    /// Creates a scoring context where the predicted score is significantly different from the final result.
+    /// Used for testing cases where no accuracy bonus should be awarded.
+    /// </summary>
+    /// <returns>A PickEvaluationContext containing an inaccurate score prediction.</returns>
+    public static PickEvaluationContext CreateIncorrectScoreContext()
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateGame();
+
+        var pick = CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam
+        );
+
+        // More than tolerance but not necessarily max penalty
+        pick.UpdateScorePrediction(
+            new ScorePrediction(40, 3)
+        );
+
+        var result = new GameResult(
+            game,
+            GameOutcome.HomeWin,
+            24,
+            14
+        );
+
+        var odds = CreateGameOdds(game);
+
+        return new PickEvaluationContext(
+            pick,
+            result,
+            odds
+        );
+    }
+
+    /// <summary>
+    /// Creates a scoring context where only the home team's predicted score differs within the accuracy range.
+    /// Used for testing home score accuracy calculations.
+    /// </summary>
+    /// <returns>A PickEvaluationContext containing a home score mismatch.</returns>
+    public static PickEvaluationContext CreateHomeScoreMismatchContext()
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateGame();
+
+        var pick = CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam
+        );
+
+        pick.UpdateScorePrediction(
+            new ScorePrediction(27, 14)
+        );
+
+        var result = new GameResult(
+            game,
+            GameOutcome.HomeWin,
+            24,
+            14
+        );
+
+        var odds = CreateGameOdds(game);
+
+        return new PickEvaluationContext(
+            pick,
+            result,
+            odds
+        );
+    }
+
+    /// <summary>
+    /// Creates a scoring context where only the away team's predicted score differs within the accuracy range.
+    /// Used for testing away score accuracy calculations.
+    /// </summary>
+    /// <returns>A PickEvaluationContext containing an away score mismatch.</returns>
+    public static PickEvaluationContext CreateAwayScoreMismatchContext()
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateGame();
+
+        var pick = CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam
+        );
+
+        pick.UpdateScorePrediction(
+            new ScorePrediction(24, 18)
+        );
+
+        var result = new GameResult(
+            game,
+            GameOutcome.HomeWin,
+            24,
+            14
+        );
+
+        var odds = CreateGameOdds(game);
+
+        return new PickEvaluationContext(
+            pick,
+            result,
+            odds
         );
     }
 }

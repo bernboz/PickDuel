@@ -1,5 +1,7 @@
 using NUnit.Framework;
 using PickDuel.Domain.ValueObjects;
+using PickDuel.Domain.Entities.Predictions;
+
 
 namespace PickDuel.Tests.Domain;
 
@@ -41,4 +43,5 @@ public class ScorePredictionTests
         Assert.That(prediction.HomeScore, Is.EqualTo(0));
         Assert.That(prediction.AwayScore, Is.EqualTo(0));
     }
+    
 }

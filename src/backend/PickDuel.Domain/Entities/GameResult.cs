@@ -22,18 +22,61 @@ public class GameResult : Entity
         int homeScore,
         int awayScore)
     {
-        if (game == null)
-        {
-            throw new ArgumentNullException(nameof(game));
-        }
+        ArgumentNullException.ThrowIfNull(game);
 
-        if (homeScore < 0 || awayScore < 0)
+        if (homeScore < 0)
         {
             throw new ArgumentOutOfRangeException(
-                "Scores cannot be negative."
+                nameof(homeScore),
+                "Home score cannot be negative."
             );
         }
 
+        if (awayScore < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(awayScore),
+                "Away score cannot be negative."
+            );
+        }
+
+
+        ValidateOutcome(
+            outcome,
+            homeScore,
+            awayScore
+        );
+
+
+        Game = game;
+        Outcome = outcome;
+        HomeScore = homeScore;
+        AwayScore = awayScore;
+        CompletedAt = DateTime.UtcNow;
+    }
+
+
+    /// <summary>
+    /// Gets the winning team name from the completed result.
+    /// </summary>
+    /// <returns>The winning team or null for ties.</returns>
+    public string? GetWinningTeam()
+    {
+        return Outcome switch
+        {
+            GameOutcome.HomeWin => Game.HomeTeam,
+            GameOutcome.AwayWin => Game.AwayTeam,
+            GameOutcome.Tie => null,
+            _ => null
+        };
+    }
+
+
+    private static void ValidateOutcome(
+        GameOutcome outcome,
+        int homeScore,
+        int awayScore)
+    {
         if (homeScore > awayScore &&
             outcome != GameOutcome.HomeWin)
         {
@@ -41,6 +84,7 @@ public class GameResult : Entity
                 "Outcome must be HomeWin when the home team has the higher score."
             );
         }
+
 
         if (awayScore > homeScore &&
             outcome != GameOutcome.AwayWin)
@@ -50,6 +94,7 @@ public class GameResult : Entity
             );
         }
 
+
         if (homeScore == awayScore &&
             outcome != GameOutcome.Tie)
         {
@@ -57,12 +102,5 @@ public class GameResult : Entity
                 "Outcome must be Tie when scores are equal."
             );
         }
-
-
-        Game = game;
-        Outcome = outcome;
-        HomeScore = homeScore;
-        AwayScore = awayScore;
-        CompletedAt = DateTime.UtcNow;
     }
 }
