@@ -132,7 +132,7 @@ public class PickScoringServiceTests
     }
 
 
-    private static PickScoringService CreateService(params IPickScoringRule[] rules)
+    private static IPickScoringService CreateService(params IPickScoringRule[] rules)
     {
         return new PickScoringService(
             rules.ToList()

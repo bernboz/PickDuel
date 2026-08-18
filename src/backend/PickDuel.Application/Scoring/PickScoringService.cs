@@ -2,30 +2,28 @@ using PickDuel.Domain.Entities;
 
 namespace PickDuel.Application.Scoring;
 
-public class PickScoringService
+public class PickScoringService : IPickScoringService
 {
     private readonly IEnumerable<IPickScoringRule> _scoringRules;
 
 
-    public PickScoringService(
-        IEnumerable<IPickScoringRule> scoringRules)
+    public PickScoringService(IEnumerable<IPickScoringRule> scoringRules)
     {
-        if (scoringRules is null)
-        {
-            throw new ArgumentNullException(nameof(scoringRules));
-        }
+        ArgumentNullException.ThrowIfNull(scoringRules);
 
         _scoringRules = scoringRules;
     }
 
 
-    public int CalculateTotalPoints(
-        PickEvaluationContext context)
+    /// <summary>
+    /// Calculates the total number of points earned for a completed pick by
+    /// evaluating every registered scoring rule.
+    /// </summary>
+    /// <param name="context">Context containing the completed pick and game result.</param>
+    /// <returns>Total points awarded by all scoring rules.</returns>
+    public int CalculateTotalPoints(PickEvaluationContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         var totalPoints = 0;
 

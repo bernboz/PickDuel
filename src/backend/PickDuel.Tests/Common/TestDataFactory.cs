@@ -2,6 +2,7 @@ using PickDuel.Application.Scoring;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
 using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.Entities.History;
 using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Tests.Common;
@@ -474,6 +475,32 @@ public static class TestDataFactory
             pick,
             result,
             odds
+        );
+    }
+    
+    /// <summary>
+    /// Creates a completed pick history record for a user within a league.
+    /// Used for testing matchup completion and season standing calculations.
+    /// </summary>
+    /// <param name="user">User associated with the pick history.</param>
+    /// <param name="league">League where the pick occurred.</param>
+    /// <param name="points">Points earned from the prediction.</param>
+    /// <returns>A completed PickHistory entity for testing purposes.</returns>
+    public static PickHistory CreatePickHistory(User user, League league, int points)
+    {
+        var game = CreateGame();
+
+        return new PickHistory(
+            user,
+            league,
+            game,
+            game.HomeTeam,
+            null,
+            GameOutcome.HomeWin,
+            24,
+            14,
+            points,
+            ScoreEventType.CorrectWinner
         );
     }
 }
