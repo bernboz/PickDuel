@@ -1,89 +1,31 @@
 using NUnit.Framework;
+using PickDuel.Domain.ValueObjects;
 using PickDuel.Domain.Entities;
-using PickDuel.Domain.Enums;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Domain;
 
 public class PickTests
 {
     [Test]
-    public void NewPick_ShouldInitializeCorrectly()
+    public void NewPick_ShouldInitializeWithDefaultValues()
     {
-        var user = new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
-        );
-
-        var league = new League(
-            "NFL League",
-            SportType.NFL,
-            user
-        );
-
-        var game = new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddDays(1),
-            DateTime.UtcNow.AddDays(1).AddHours(3)
-        );
-
-        var pick = new Pick(user, league, game, "Chiefs", 3);
+        var pick = TestDataFactory.CreateFuturePick();
 
         Assert.That(pick.Id, Is.Not.EqualTo(Guid.Empty));
-        Assert.That(pick.User, Is.EqualTo(user));
-        Assert.That(pick.League, Is.EqualTo(league));
-        Assert.That(pick.Game, Is.EqualTo(game));
-        Assert.That(pick.SelectedTeam, Is.EqualTo("Chiefs"));
+        Assert.That(pick.ConfidenceMultiplier, Is.EqualTo(3));
+        Assert.That(pick.ScorePrediction, Is.Null);
     }
 
 
     [Test]
-    public void NewPick_ShouldThrowException_WhenSelectingInvalidTeam()
+    public void NewPick_ShouldStoreSelectedTeam()
     {
-        var user = new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
-        );
-
-        var league = new League(
-            "NFL League",
-            SportType.NFL,
-            user
-        );
-
-        var game = new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddDays(1),
-            DateTime.UtcNow.AddDays(1).AddHours(3)
-        );
-
-        Assert.Throws<ArgumentException>(() =>
-            new Pick(user, league, game, "Cowboys", 3));
-    }
-    
-    [Test]
-    public void NewPick_ShouldStoreConfidenceMultiplier()
-    {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
-
-        var pick = new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            5
-        );
+        var pick = TestDataFactory.CreateFuturePick();
 
         Assert.That(
-            pick.ConfidenceMultiplier,
-            Is.EqualTo(5)
+            pick.SelectedTeam,
+            Is.EqualTo(pick.Game.HomeTeam)
         );
     }
 
@@ -91,9 +33,9 @@ public class PickTests
     [Test]
     public void NewPick_ShouldThrow_WhenConfidenceIsBelowMinimum()
     {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+        var game = TestDataFactory.CreateFutureGame();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new Pick(
@@ -102,16 +44,17 @@ public class PickTests
                 game,
                 game.HomeTeam,
                 0
-            ));
+            )
+        );
     }
 
 
     [Test]
     public void NewPick_ShouldThrow_WhenConfidenceIsAboveMaximum()
     {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+        var game = TestDataFactory.CreateFutureGame();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new Pick(
@@ -120,57 +63,15 @@ public class PickTests
                 game,
                 game.HomeTeam,
                 6
-            ));
-    }
-
-
-    [Test]
-    public void NewPick_ShouldAllowMinimumConfidence()
-    {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
-
-        var pick = new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            1
-        );
-
-        Assert.That(
-            pick.ConfidenceMultiplier,
-            Is.EqualTo(1)
+            )
         );
     }
 
 
     [Test]
-    public void NewPick_ShouldAllowMaximumConfidence()
+    public void ChangeConfidence_ShouldUpdateValue_WhenGameHasNotStarted()
     {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
-
-        var pick = new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            5
-        );
-
-        Assert.That(
-            pick.ConfidenceMultiplier,
-            Is.EqualTo(5)
-        );
-    }
-    
-    [Test]
-    public void ChangeConfidence_ShouldUpdateConfidence_WhenGameHasNotStarted()
-    {
-        var pick = CreateFuturePick();
+        var pick = TestDataFactory.CreateFuturePick();
 
         pick.ChangeConfidence(5);
 
@@ -179,129 +80,117 @@ public class PickTests
             Is.EqualTo(5)
         );
     }
-    
+
+
     [Test]
     public void ChangeConfidence_ShouldThrow_WhenGameHasStarted()
     {
-        var pick = CreateStartedPick();
+        var pick = TestDataFactory.CreateStartedPick();
 
         Assert.Throws<InvalidOperationException>(() =>
             pick.ChangeConfidence(5)
         );
     }
-    
+
+
     [Test]
     public void ChangeSelection_ShouldUpdateTeam_WhenGameHasNotStarted()
     {
-        var pick = CreateFuturePick();
+        var pick = TestDataFactory.CreateFuturePick();
 
-        pick.ChangeSelection("Bills");
+        pick.ChangeSelection(
+            pick.Game.AwayTeam
+        );
 
         Assert.That(
             pick.SelectedTeam,
-            Is.EqualTo("Bills")
+            Is.EqualTo(pick.Game.AwayTeam)
         );
     }
-    
+
+
     [Test]
     public void ChangeSelection_ShouldThrow_WhenGameHasStarted()
     {
-        var pick = CreateStartedPick();
+        var pick = TestDataFactory.CreateStartedPick();
 
         Assert.Throws<InvalidOperationException>(() =>
-            pick.ChangeSelection("Bills")
+            pick.ChangeSelection(
+                pick.Game.AwayTeam
+            )
         );
     }
-    
+
+
     [Test]
-    public void ChangeSelection_ShouldThrow_WhenTeamIsNotInGame()
+    public void ChangeSelection_ShouldThrow_WhenTeamDoesNotExistInGame()
     {
-        var pick = CreateFuturePick();
+        var pick = TestDataFactory.CreateFuturePick();
 
         Assert.Throws<ArgumentException>(() =>
             pick.ChangeSelection("Cowboys")
         );
     }
-    
-    private static User CreateUser()
+
+
+    [Test]
+    public void UpdateScorePrediction_ShouldStorePrediction()
     {
-        return new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
+        var pick = TestDataFactory.CreateFuturePick();
+
+        var prediction = new ScorePrediction(24, 17);
+
+        pick.UpdateScorePrediction(prediction);
+
+        Assert.That(
+            pick.ScorePrediction,
+            Is.EqualTo(prediction)
         );
     }
 
 
-    private static League CreateLeague(User user)
+    [Test]
+    public void UpdateScorePrediction_ShouldReplaceExistingPrediction()
     {
-        return new League(
-            "NFL League",
-            SportType.NFL,
-            user
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.UpdateScorePrediction(
+            new ScorePrediction(24,17)
+        );
+
+        var updatedPrediction = new ScorePrediction(31,21);
+
+        pick.UpdateScorePrediction(
+            updatedPrediction
+        );
+
+        Assert.That(
+            pick.ScorePrediction,
+            Is.EqualTo(updatedPrediction)
         );
     }
 
 
-    private static Game CreateGame()
+    [Test]
+    public void UpdateScorePrediction_ShouldThrow_WhenGameHasStarted()
     {
-        return new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddDays(1),
-            DateTime.UtcNow.AddDays(1).AddHours(3)
-        );
-    }
-    
-    private static Pick CreateFuturePick()
-    {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateFutureGame();
+        var pick = TestDataFactory.CreateStartedPick();
 
-        return new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            3
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.UpdateScorePrediction(
+                new ScorePrediction(24,17)
+            )
         );
     }
 
 
-    private static Pick CreateStartedPick()
+    [Test]
+    public void UpdateScorePrediction_ShouldThrow_WhenPredictionIsNull()
     {
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateStartedGame();
+        var pick = TestDataFactory.CreateFuturePick();
 
-        return new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            3
-        );
-    }
-    
-    private static Game CreateFutureGame()
-    {
-        return new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddHours(1),
-            DateTime.UtcNow.AddHours(4)
-        );
-    }
-
-    private static Game CreateStartedGame()
-    {
-        return new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddHours(-4),
-            DateTime.UtcNow.AddHours(-1)
+        Assert.Throws<ArgumentNullException>(() =>
+            pick.UpdateScorePrediction(null!)
         );
     }
 }

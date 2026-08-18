@@ -1,140 +1,141 @@
+using NSubstitute;
 using NUnit.Framework;
 using PickDuel.Application.Scoring;
 using PickDuel.Domain.Entities;
-using PickDuel.Domain.Enums;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Application;
 
 public class PickScoringServiceTests
 {
     [Test]
-    public void CalculateTotalPoints_ShouldReturnPointsFromSingleRule()
-    {
-        // Arrange
-        var rule = new FakeScoringRule(5);
-
-        var service = new PickScoringService(
-            new List<IPickScoringRule>
-            {
-                rule
-            });
-
-        var context = CreateContext();
-
-        // Act
-        var points = service.CalculateTotalPoints(context);
-
-        // Assert
-        Assert.That(points, Is.EqualTo(5));
-    }
-
-
-    [Test]
-    public void CalculateTotalPoints_ShouldAddPointsFromMultipleRules()
-    {
-        // Arrange
-        var service = new PickScoringService(
-            new List<IPickScoringRule>
-            {
-                new FakeScoringRule(5),
-                new FakeScoringRule(10)
-            });
-
-        var context = CreateContext();
-
-        // Act
-        var points = service.CalculateTotalPoints(context);
-
-        // Assert
-        Assert.That(points, Is.EqualTo(15));
-    }
-
-
-    [Test]
     public void Constructor_ShouldThrow_WhenRulesAreNull()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new PickScoringService(null!));
+            new PickScoringService(null!)
+        );
+    }
+
+
+    [Test]
+    public void CalculateTotalPoints_ShouldReturnPointsFromSingleRule()
+    {
+        var rule = CreateMockRule(25);
+
+        var service = CreateService(rule);
+
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        var points = service.CalculateTotalPoints(context);
+
+        Assert.That(points, Is.EqualTo(25));
+    }
+
+
+    [Test]
+    public void CalculateTotalPoints_ShouldSumPointsFromMultipleRules()
+    {
+        var firstRule = CreateMockRule(25);
+        var secondRule = CreateMockRule(50);
+
+        var service = CreateService(
+            firstRule,
+            secondRule
+        );
+
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        var points = service.CalculateTotalPoints(context);
+
+        Assert.That(points, Is.EqualTo(75));
+    }
+
+
+    [Test]
+    public void CalculateTotalPoints_ShouldSupportNegativeScoringRules()
+    {
+        var rewardRule = CreateMockRule(50);
+        var penaltyRule = CreateMockRule(-25);
+
+        var service = CreateService(
+            rewardRule,
+            penaltyRule
+        );
+
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        var points = service.CalculateTotalPoints(context);
+
+        Assert.That(points, Is.EqualTo(25));
+    }
+
+
+    [Test]
+    public void CalculateTotalPoints_ShouldReturnZero_WhenAllRulesReturnZero()
+    {
+        var rule = CreateMockRule(0);
+
+        var service = CreateService(rule);
+
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        var points = service.CalculateTotalPoints(context);
+
+        Assert.That(points, Is.Zero);
     }
 
 
     [Test]
     public void CalculateTotalPoints_ShouldThrow_WhenContextIsNull()
     {
-        var service = new PickScoringService(
-            new List<IPickScoringRule>
-            {
-                new FakeScoringRule(5)
-            });
+        var service = CreateService(
+            CreateMockRule(10)
+        );
 
         Assert.Throws<ArgumentNullException>(() =>
-            service.CalculateTotalPoints(null!));
-    }
-
-
-    private static PickEvaluationContext CreateContext()
-    {
-        var user = new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
-        );
-
-        var league = new League(
-            "NFL League",
-            SportType.NFL,
-            user
-        );
-
-        var game = new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddHours(3)
-        );
-
-        var pick = new Pick(
-            user,
-            league,
-            game,
-            "Chiefs",
-            3
-        );
-
-        var result = new GameResult(
-            game,
-            GameOutcome.HomeWin,
-            27,
-            21
-        );
-
-        var odds = new GameOdds(
-            game,
-            0.75m,
-            0.25m
-        );
-        
-        return new PickEvaluationContext(
-            pick,
-            result,
-            odds
+            service.CalculateTotalPoints(null!)
         );
     }
 
 
-    private class FakeScoringRule : IPickScoringRule
+    [Test]
+    public void CalculateTotalPoints_ShouldEvaluateEveryRule()
     {
-        private readonly int _points;
+        var firstRule = CreateMockRule(10);
+        var secondRule = CreateMockRule(20);
 
-        public FakeScoringRule(int points)
-        {
-            _points = points;
-        }
+        var service = CreateService(
+            firstRule,
+            secondRule
+        );
 
-        public int CalculatePoints(PickEvaluationContext context)
-        {
-            return _points;
-        }
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        service.CalculateTotalPoints(context);
+
+        firstRule.Received(1)
+            .CalculatePoints(context);
+
+        secondRule.Received(1)
+            .CalculatePoints(context);
+    }
+
+
+    private static PickScoringService CreateService(params IPickScoringRule[] rules)
+    {
+        return new PickScoringService(
+            rules.ToList()
+        );
+    }
+
+
+    private static IPickScoringRule CreateMockRule(int points)
+    {
+        var rule = Substitute.For<IPickScoringRule>();
+
+        rule.CalculatePoints(Arg.Any<PickEvaluationContext>())
+            .Returns(points);
+
+        return rule;
     }
 }

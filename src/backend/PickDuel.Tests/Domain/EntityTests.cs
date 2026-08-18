@@ -1,71 +1,80 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Domain;
 
 public class EntityTests
 {
     [Test]
-    public void CreatingEntity_ShouldGenerateUniqueIdentifier()
+    public void NewEntity_ShouldGenerateIdentifier()
     {
-        // Arrange
-        var user1 = CreateUser();
-        var user2 = CreateUser();
+        var user = TestDataFactory.CreateUser();
+
+        Assert.That(
+            user.Id,
+            Is.Not.EqualTo(Guid.Empty)
+        );
+    }
 
 
-        // Assert
+    [Test]
+    public void NewEntities_ShouldGenerateUniqueIdentifiers()
+    {
+        var userOne = TestDataFactory.CreateUser();
+        var userTwo = TestDataFactory.CreateUser();
+
+        Assert.That(
+            userOne.Id,
+            Is.Not.EqualTo(userTwo.Id)
+        );
+    }
+
+
+    [Test]
+    public void DifferentEntityTypes_ShouldGenerateIndependentIdentifiers()
+    {
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
         Assert.Multiple(() =>
         {
-            Assert.That(user1.Id, Is.Not.EqualTo(Guid.Empty));
-            Assert.That(user2.Id, Is.Not.EqualTo(Guid.Empty));
-            Assert.That(user1.Id, Is.Not.EqualTo(user2.Id));
+            Assert.That(user.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(league.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(user.Id, Is.Not.EqualTo(league.Id));
         });
     }
 
 
     [Test]
-    public void DifferentEntityTypes_ShouldHaveIndependentIdentifiers()
+    public void CreatingManyEntities_ShouldGenerateUniqueIdentifiers()
     {
-        // Arrange
-        var user = CreateUser();
+        var users = Enumerable.Range(0, 100)
+            .Select(_ => TestDataFactory.CreateUser())
+            .ToList();
 
-        var league = new League(
-            "NFL League",
-            PickDuel.Domain.Enums.SportType.NFL,
-            user
+        var uniqueIds = users
+            .Select(user => user.Id)
+            .Distinct()
+            .Count();
+
+        Assert.That(
+            uniqueIds,
+            Is.EqualTo(users.Count)
         );
-
-
-        // Assert
-        Assert.That(user.Id, Is.Not.EqualTo(league.Id));
     }
 
 
     [Test]
     public void EntityIdentifier_ShouldRemainConsistentAfterCreation()
     {
-        // Arrange
-        var user = CreateUser();
+        var user = TestDataFactory.CreateUser();
 
-        var originalId = user.Id;
+        var initialId = user.Id;
 
-
-        // Act
-        var retrievedId = user.Id;
-
-
-        // Assert
-        Assert.That(retrievedId, Is.EqualTo(originalId));
-    }
-
-
-    private static User CreateUser()
-    {
-        return new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
+        Assert.That(
+            user.Id,
+            Is.EqualTo(initialId)
         );
     }
 }

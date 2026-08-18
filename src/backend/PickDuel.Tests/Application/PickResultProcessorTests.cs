@@ -1,7 +1,9 @@
+using NSubstitute;
 using NUnit.Framework;
 using PickDuel.Application.Scoring;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Application;
 
@@ -17,146 +19,177 @@ public class PickResultProcessorTests
 
 
     [Test]
-    public void ProcessPickResult_ShouldCreatePositiveScoreEvent_WhenPickScoresPoints()
+    public void ProcessPickResult_ShouldCreateCorrectWinnerEvent_WhenPredictionIsCorrect()
     {
-        // Arrange
-        var processor = CreateProcessor(5);
+        var processor = CreateProcessor(50);
+        var context = TestDataFactory.CreateCorrectPredictionContext();
 
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
-
-        var pick = new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            3
-        );
-
-        var gameResult = new GameResult(
-            game,
-            GameOutcome.HomeWin,
-            21,
-            10
-        );
-
-        var odds = new GameOdds(
-            game,
-            0.75m,
-            0.25m
-        );
-
-        var context = new PickEvaluationContext(
-            pick,
-            gameResult,
-            odds
-        );
-
-
-        // Act
         var result = processor.ProcessPickResult(context);
 
-
-        // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.User, Is.EqualTo(user));
-            Assert.That(result.League, Is.EqualTo(league));
-            Assert.That(result.Points, Is.EqualTo(5));
+            Assert.That(result.User, Is.EqualTo(context.Pick.User));
+            Assert.That(result.League, Is.EqualTo(context.Pick.League));
+            Assert.That(result.Points, Is.EqualTo(50));
             Assert.That(result.Type, Is.EqualTo(ScoreEventType.CorrectWinner));
+            Assert.That(result.Description, Is.EqualTo("Correct winner prediction"));
         });
     }
 
 
     [Test]
-    public void ProcessPickResult_ShouldCreateCorrectScoreEvent_WhenNoPointsAreEarned()
+    public void ProcessPickResult_ShouldCreatePenaltyEvent_WhenPredictionIsIncorrect()
     {
-        // Arrange
-        var processor = CreateProcessor(0);
+        var processor = CreateProcessor(-25);
+        var context = TestDataFactory.CreateIncorrectPredictionContext();
 
-        var user = CreateUser();
-        var league = CreateLeague(user);
-        var game = CreateGame();
-
-        var pick = new Pick(
-            user,
-            league,
-            game,
-            game.HomeTeam,
-            3
-        );
-
-        var gameResult = new GameResult(
-            game,
-            GameOutcome.HomeWin,
-            21,
-            10
-        );
-
-        var odds = new GameOdds(
-            game,
-            0.75m,
-            0.25m
-        );
-
-        var context = new PickEvaluationContext(
-            pick,
-            gameResult,
-            odds
-        );
-
-
-        // Act
         var result = processor.ProcessPickResult(context);
 
-
-        // Assert
-        Assert.That(result.Points, Is.Zero);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Points, Is.EqualTo(-25));
+            Assert.That(result.Type, Is.EqualTo(ScoreEventType.Penalty));
+            Assert.That(result.Description, Is.EqualTo("Incorrect prediction penalty"));
+        });
     }
 
 
     [Test]
-    public void ApplyScoreEvent_ShouldUpdateLeagueStanding()
+    public void ProcessPickResult_ShouldCreateScoreEvent_WhenPointsAreZero()
     {
-        // Arrange
-        var processor = CreateProcessor(5);
+        var processor = CreateProcessor(0);
+        var context = TestDataFactory.CreateCorrectPredictionContext();
 
-        var user = CreateUser();
-        var league = CreateLeague(user);
+        var result = processor.ProcessPickResult(context);
 
-        var standing = new LeagueStanding(
-            user,
-            league
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Points, Is.Zero);
+            Assert.That(result.User, Is.EqualTo(context.Pick.User));
+            Assert.That(result.League, Is.EqualTo(context.Pick.League));
+        });
+    }
+
+
+    [Test]
+    public void ProcessPickResult_ShouldThrow_WhenContextIsNull()
+    {
+        var processor = CreateProcessor(10);
+
+        Assert.Throws<ArgumentNullException>(() =>
+            processor.ProcessPickResult(null!)
         );
-
-        var scoreEvent = new ScoreEvent(
-            user,
-            league,
-            5,
-            ScoreEventType.CorrectWinner,
-            "Correct winner prediction"
-        );
+    }
 
 
-        // Act
+    [Test]
+    public void ApplyScoreEvent_ShouldIncreaseStandingPoints_WhenEventIsPositive()
+    {
+        var processor = CreateProcessor(50);
+
+        var standing = CreateStanding();
+
+        var scoreEvent = CreateScoreEvent(50);
+
         processor.ApplyScoreEvent(
             scoreEvent,
             standing
         );
 
-
-        // Assert
         Assert.That(
             standing.TotalPoints,
-            Is.EqualTo(5)
+            Is.EqualTo(50)
         );
+    }
+
+
+    [Test]
+    public void ApplyScoreEvent_ShouldDecreaseStandingPoints_WhenEventIsNegative()
+    {
+        var processor = CreateProcessor(-25);
+
+        var standing = CreateStanding();
+
+        var scoreEvent = CreateScoreEvent(-25);
+
+        processor.ApplyScoreEvent(
+            scoreEvent,
+            standing
+        );
+
+        Assert.That(
+            standing.TotalPoints,
+            Is.EqualTo(-25)
+        );
+    }
+
+
+    [Test]
+    public void ApplyScoreEvent_ShouldThrow_WhenScoreEventIsNull()
+    {
+        var processor = CreateProcessor(10);
+
+        var standing = CreateStanding();
+
+        Assert.Throws<ArgumentNullException>(() =>
+            processor.ApplyScoreEvent(
+                null!,
+                standing
+            ));
+    }
+
+
+    [Test]
+    public void ApplyScoreEvent_ShouldThrow_WhenStandingIsNull()
+    {
+        var processor = CreateProcessor(10);
+
+        var scoreEvent = CreateScoreEvent(10);
+
+        Assert.Throws<ArgumentNullException>(() =>
+            processor.ApplyScoreEvent(
+                scoreEvent,
+                null!
+            ));
+    }
+
+
+    [Test]
+    public void ProcessPickResult_ShouldUseScoringServiceResult()
+    {
+        var rule = Substitute.For<IPickScoringRule>();
+
+        var context = TestDataFactory.CreateCorrectPredictionContext();
+
+        rule.CalculatePoints(context)
+            .Returns(75);
+
+        var service = new PickScoringService(
+            new List<IPickScoringRule>
+            {
+                rule
+            });
+
+        var processor = new PickResultProcessor(service);
+
+        var result = processor.ProcessPickResult(context);
+
+        Assert.That(
+            result.Points,
+            Is.EqualTo(75)
+        );
+
+        rule.Received(1)
+            .CalculatePoints(context);
     }
 
 
     private static PickResultProcessor CreateProcessor(int points)
     {
-        var rule = new FakeScoringRule(points);
+        var rule = Substitute.For<IPickScoringRule>();
+
+        rule.CalculatePoints(Arg.Any<PickEvaluationContext>())
+            .Returns(points);
 
         var scoringService = new PickScoringService(
             new List<IPickScoringRule>
@@ -168,53 +201,33 @@ public class PickResultProcessorTests
     }
 
 
-    private static User CreateUser()
+    private static LeagueStanding CreateStanding()
     {
-        return new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        return new LeagueStanding(
+            user,
+            league
         );
     }
 
 
-    private static League CreateLeague(User user)
+    private static ScoreEvent CreateScoreEvent(int points)
     {
-        return new League(
-            "NFL League",
-            SportType.NFL,
-            user
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        return new ScoreEvent(
+            user,
+            league,
+            points,
+            points >= 0
+                ? ScoreEventType.CorrectWinner
+                : ScoreEventType.Penalty,
+            points >= 0
+                ? "Correct winner prediction"
+                : "Incorrect prediction penalty"
         );
-    }
-
-
-    private static Game CreateGame()
-    {
-        return new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddDays(1),
-            DateTime.UtcNow.AddDays(1).AddHours(3)
-        );
-    }
-
-
-    private class FakeScoringRule : IPickScoringRule
-    {
-        private readonly int _points;
-
-
-        public FakeScoringRule(int points)
-        {
-            _points = points;
-        }
-
-
-        public int CalculatePoints(
-            PickEvaluationContext context)
-        {
-            return _points;
-        }
     }
 }

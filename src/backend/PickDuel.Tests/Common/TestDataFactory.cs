@@ -209,4 +209,75 @@ public static class TestDataFactory
 
         return new PickEvaluationContext(pick, result, odds);
     }
+    
+    /// <summary>
+    /// Creates a future pick with default test values.
+    /// </summary>
+    /// <param name="confidenceMultiplier">Confidence value from 1-5.</param>
+    /// <param name="selectedTeam">Team selected by the user.</param>
+    /// <returns>A Pick entity scheduled before game start.</returns>
+    public static Pick CreateFuturePick(int confidenceMultiplier = 3, string? selectedTeam = null)
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateFutureGame();
+
+        return new Pick(
+            user,
+            league,
+            game,
+            selectedTeam ?? game.HomeTeam,
+            confidenceMultiplier
+        );
+    }
+
+
+    /// <summary>
+    /// Creates a pick for a game that has already started.
+    /// </summary>
+    /// <returns>A locked Pick entity.</returns>
+    public static Pick CreateStartedPick()
+    {
+        var user = CreateUser();
+        var league = CreateLeague(user);
+        var game = CreateStartedGame();
+
+        return new Pick(
+            user,
+            league,
+            game,
+            game.HomeTeam,
+            3
+        );
+    }
+
+
+    /// <summary>
+    /// Creates a future game for testing pick behavior.
+    /// </summary>
+    /// <returns>A game scheduled in the future.</returns>
+    public static Game CreateFutureGame()
+    {
+        return new Game(
+            "Chiefs",
+            "Bills",
+            DateTime.UtcNow.AddHours(1),
+            DateTime.UtcNow.AddHours(4)
+        );
+    }
+
+
+    /// <summary>
+    /// Creates a game that has already started.
+    /// </summary>
+    /// <returns>A started game.</returns>
+    public static Game CreateStartedGame()
+    {
+        return new Game(
+            "Chiefs",
+            "Bills",
+            DateTime.UtcNow.AddHours(-4),
+            DateTime.UtcNow.AddHours(-1)
+        );
+    }
 }

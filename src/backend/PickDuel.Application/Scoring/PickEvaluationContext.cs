@@ -31,6 +31,13 @@ public class PickEvaluationContext
         {
             throw new ArgumentNullException(nameof(gameOdds));
         }
+        
+        if (pick.Game != gameOdds.Game)
+        {
+            throw new ArgumentException(
+                "Pick and game odds must reference the same game."
+            );
+        }
 
         Pick = pick;
         GameResult = gameResult;

@@ -1,4 +1,5 @@
 using PickDuel.Domain.Common;
+using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Domain.Entities;
 
@@ -14,9 +15,19 @@ public class Pick : Entity
 
     public int ConfidenceMultiplier { get; private set; }
 
+    public ScorePrediction? ScorePrediction { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
 
+    /// <summary>
+    /// Creates a pick for the specified team and confidence multiplier.
+    /// </summary>
+    /// <param name="user">User making the prediction.</param>
+    /// <param name="league">League where the prediction exists.</param>
+    /// <param name="game">Game being predicted.</param>
+    /// <param name="selectedTeam">Team selected by the user.</param>
+    /// <param name="confidenceMultiplier">Confidence value from 1-5.</param>
     public Pick(User user, League league, Game game, string selectedTeam, int confidenceMultiplier)
     {
         if (user == null)
@@ -46,6 +57,10 @@ public class Pick : Entity
     }
 
 
+    /// <summary>
+    /// Changes the confidence multiplier for this pick.
+    /// </summary>
+    /// <param name="newConfidence">New confidence value from 1-5.</param>
     public void ChangeConfidence(int newConfidence)
     {
         EnsurePickIsEditable();
@@ -56,6 +71,10 @@ public class Pick : Entity
     }
 
 
+    /// <summary>
+    /// Changes the selected team for this pick.
+    /// </summary>
+    /// <param name="newTeam">New team selected by the user.</param>
     public void ChangeSelection(string newTeam)
     {
         EnsurePickIsEditable();
@@ -66,6 +85,26 @@ public class Pick : Entity
     }
 
 
+    /// <summary>
+    /// Updates the exact score prediction for this pick.
+    /// </summary>
+    /// <param name="prediction">Predicted score for both teams.</param>
+    public void UpdateScorePrediction(ScorePrediction prediction)
+    {
+        EnsurePickIsEditable();
+
+        if (prediction == null)
+        {
+            throw new ArgumentNullException(nameof(prediction));
+        }
+
+        ScorePrediction = prediction;
+    }
+
+
+    /// <summary>
+    /// Ensures the pick can still be modified before game start.
+    /// </summary>
     private void EnsurePickIsEditable()
     {
         if (Game.HasStarted)
@@ -77,6 +116,11 @@ public class Pick : Entity
     }
 
 
+    /// <summary>
+    /// Validates that the selected team is part of the game.
+    /// </summary>
+    /// <param name="game">Game being predicted.</param>
+    /// <param name="selectedTeam">Team selected by the user.</param>
     private static void ValidateSelectedTeam(Game game, string selectedTeam)
     {
         if (selectedTeam != game.HomeTeam && selectedTeam != game.AwayTeam)
@@ -89,6 +133,10 @@ public class Pick : Entity
     }
 
 
+    /// <summary>
+    /// Validates that confidence is within the allowed range.
+    /// </summary>
+    /// <param name="confidenceMultiplier">Confidence value to validate.</param>
     private static void ValidateConfidence(int confidenceMultiplier)
     {
         if (confidenceMultiplier < 1 || confidenceMultiplier > 5)

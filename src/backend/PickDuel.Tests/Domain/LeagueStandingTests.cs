@@ -1,82 +1,134 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
-using PickDuel.Domain.Enums;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Domain;
 
 public class LeagueStandingTests
 {
     [Test]
-    public void NewLeagueStanding_ShouldStartWithNoPoints()
+    public void NewLeagueStanding_ShouldInitializeWithZeroStatistics()
     {
-        // Arrange
-        var user = CreateUser();
-        var league = CreateLeague();
+        var standing = CreateStanding();
 
-        // Act
-        var standing = new LeagueStanding(
-            user,
-            league
-        );
-
-        // Assert
         Assert.That(standing.TotalPoints, Is.Zero);
+        Assert.That(standing.TotalWins, Is.Zero);
+        Assert.That(standing.TotalLosses, Is.Zero);
+        Assert.That(standing.TotalPicks, Is.Zero);
     }
 
 
     [Test]
-    public void AddPoints_ShouldUpdateStandingTotal()
+    public void AddPoints_ShouldIncreaseTotalPoints()
     {
-        // Arrange
         var standing = CreateStanding();
 
-        // Act
+        standing.AddPoints(50);
+
+        Assert.That(standing.TotalPoints, Is.EqualTo(50));
+    }
+
+
+    [Test]
+    public void AddPoints_ShouldAllowNegativeScores()
+    {
+        var standing = CreateStanding();
+
+        standing.AddPoints(100);
+        standing.AddPoints(-25);
+
+        Assert.That(standing.TotalPoints, Is.EqualTo(75));
+    }
+
+
+    [Test]
+    public void AddPoints_ShouldHandleMultipleScoreEvents()
+    {
+        var standing = CreateStanding();
+
+        standing.AddPoints(50);
         standing.AddPoints(25);
+        standing.AddPoints(-10);
 
-        // Assert
-        Assert.That(standing.TotalPoints, Is.EqualTo(25));
+        Assert.That(standing.TotalPoints, Is.EqualTo(65));
     }
 
 
     [Test]
-    public void AddPoints_ShouldAllowPenaltiesToReduceRanking()
+    public void RecordPredictionResult_ShouldIncreaseWins_WhenPredictionIsCorrect()
     {
-        // Arrange
         var standing = CreateStanding();
 
-        standing.AddPoints(20);
+        standing.RecordPredictionResult(true);
 
-        // Act
-        standing.AddPoints(-5);
-
-        // Assert
-        Assert.That(standing.TotalPoints, Is.EqualTo(15));
+        Assert.That(standing.TotalWins, Is.EqualTo(1));
+        Assert.That(standing.TotalLosses, Is.Zero);
+        Assert.That(standing.TotalPicks, Is.EqualTo(1));
     }
 
 
     [Test]
-    public void AddPoints_ShouldAllowMultipleScoringEvents()
+    public void RecordPredictionResult_ShouldIncreaseLosses_WhenPredictionIsIncorrect()
     {
-        // Arrange
         var standing = CreateStanding();
 
-        // Act
-        standing.AddPoints(5);
-        standing.AddPoints(10);
-        standing.AddPoints(-2);
+        standing.RecordPredictionResult(false);
 
-        // Assert
-        Assert.That(standing.TotalPoints, Is.EqualTo(13));
+        Assert.That(standing.TotalWins, Is.Zero);
+        Assert.That(standing.TotalLosses, Is.EqualTo(1));
+        Assert.That(standing.TotalPicks, Is.EqualTo(1));
+    }
+
+
+    [Test]
+    public void RecordPredictionResult_ShouldTrackMultiplePredictions()
+    {
+        var standing = CreateStanding();
+
+        standing.RecordPredictionResult(true);
+        standing.RecordPredictionResult(true);
+        standing.RecordPredictionResult(false);
+
+        Assert.That(standing.TotalWins, Is.EqualTo(2));
+        Assert.That(standing.TotalLosses, Is.EqualTo(1));
+        Assert.That(standing.TotalPicks, Is.EqualTo(3));
+    }
+
+
+    [Test]
+    public void GetWinPercentage_ShouldReturnCorrectPercentage()
+    {
+        var standing = CreateStanding();
+
+        standing.RecordPredictionResult(true);
+        standing.RecordPredictionResult(true);
+        standing.RecordPredictionResult(false);
+        standing.RecordPredictionResult(true);
+
+        var winPercentage = standing.GetWinPercentage();
+
+        Assert.That(winPercentage, Is.EqualTo(75));
+    }
+
+
+    [Test]
+    public void GetWinPercentage_ShouldReturnZero_WhenNoPredictionsExist()
+    {
+        var standing = CreateStanding();
+
+        var winPercentage = standing.GetWinPercentage();
+
+        Assert.That(winPercentage, Is.Zero);
     }
 
 
     [Test]
     public void CreatingStanding_ShouldRequireUser()
     {
-        // Arrange
-        var league = CreateLeague();
+        var league = TestDataFactory.CreateLeague(
+            TestDataFactory.CreateUser()
+        );
 
-        // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
             new LeagueStanding(
                 null!,
@@ -88,10 +140,8 @@ public class LeagueStandingTests
     [Test]
     public void CreatingStanding_ShouldRequireLeague()
     {
-        // Arrange
-        var user = CreateUser();
+        var user = TestDataFactory.CreateUser();
 
-        // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
             new LeagueStanding(
                 user,
@@ -102,30 +152,12 @@ public class LeagueStandingTests
 
     private static LeagueStanding CreateStanding()
     {
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
         return new LeagueStanding(
-            CreateUser(),
-            CreateLeague()
-        );
-    }
-
-
-    private static User CreateUser()
-    {
-        return new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
-        );
-    }
-
-
-    private static League CreateLeague()
-    {
-        return new League(
-            "NFL League",
-            SportType.NFL,
-            CreateUser()
+            user,
+            league
         );
     }
 }

@@ -1,14 +1,15 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Domain;
 
 public class GameOddsTests
 {
     [Test]
-    public void GameOdds_ShouldInitializeCorrectly()
+    public void NewGameOdds_ShouldInitializeCorrectly()
     {
-        var game = CreateGame();
+        var game = TestDataFactory.CreateGame();
 
         var odds = new GameOdds(
             game,
@@ -16,17 +17,33 @@ public class GameOddsTests
             0.25m
         );
 
-        Assert.That(odds.Game, Is.EqualTo(game));
-        Assert.That(odds.HomeWinProbability, Is.EqualTo(0.75m));
-        Assert.That(odds.AwayWinProbability, Is.EqualTo(0.25m));
-        Assert.That(odds.IsLocked, Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(odds.Game, Is.EqualTo(game));
+            Assert.That(odds.HomeWinProbability, Is.EqualTo(0.75m));
+            Assert.That(odds.AwayWinProbability, Is.EqualTo(0.25m));
+            Assert.That(odds.IsLocked, Is.False);
+            Assert.That(odds.LockedAt, Is.Null);
+        });
     }
 
 
     [Test]
-    public void GameOdds_ShouldThrow_WhenProbabilitiesDoNotEqualOne()
+    public void NewGameOdds_ShouldThrow_WhenGameIsNull()
     {
-        var game = CreateGame();
+        Assert.Throws<ArgumentNullException>(() =>
+            new GameOdds(
+                null!,
+                0.75m,
+                0.25m
+            ));
+    }
+
+
+    [Test]
+    public void NewGameOdds_ShouldThrow_WhenProbabilitiesDoNotEqualOne()
+    {
+        var game = TestDataFactory.CreateGame();
 
         Assert.Throws<ArgumentException>(() =>
             new GameOdds(
@@ -35,52 +52,96 @@ public class GameOddsTests
                 0.60m
             ));
     }
-    
-    [Test]
-    public void Constructor_ShouldThrow_WhenHomeProbabilityIsInvalid()
-    {
-        var game = new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddHours(1),
-            DateTime.UtcNow.AddHours(4)
-        );
 
+
+    [Test]
+    public void NewGameOdds_ShouldThrow_WhenHomeProbabilityIsInvalid()
+    {
+        var game = TestDataFactory.CreateGame();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new GameOdds(
                 game,
                 0m,
                 1m
-            )
-        );
+            ));
     }
 
 
     [Test]
-    public void Lock_ShouldLockOdds()
+    public void NewGameOdds_ShouldThrow_WhenAwayProbabilityIsInvalid()
     {
+        var game = TestDataFactory.CreateGame();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new GameOdds(
+                game,
+                1m,
+                0m
+            ));
+    }
+
+
+    [Test]
+    public void NewGameOdds_ShouldAllowValidProbabilityBoundaries()
+    {
+        var game = TestDataFactory.CreateGame();
+
         var odds = new GameOdds(
-            CreateGame(),
-            0.75m,
-            0.25m
+            game,
+            0.99m,
+            0.01m
         );
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(odds.HomeWinProbability, Is.EqualTo(0.99m));
+            Assert.That(odds.AwayWinProbability, Is.EqualTo(0.01m));
+        });
+    }
+
+
+    [Test]
+    public void Lock_ShouldLockOddsAndSetLockedTimestamp()
+    {
+        var odds = CreateOdds();
 
         odds.Lock();
 
-        Assert.That(odds.IsLocked, Is.True);
-        Assert.That(odds.LockedAt, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(odds.IsLocked, Is.True);
+            Assert.That(odds.LockedAt, Is.Not.Null);
+        });
     }
 
 
     [Test]
-    public void Lock_ShouldThrow_WhenAlreadyLocked()
+    public void Lock_ShouldPreserveProbabilities()
     {
-        var odds = new GameOdds(
-            CreateGame(),
-            0.75m,
-            0.25m
-        );
+        var odds = CreateOdds();
+
+        odds.Lock();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                odds.HomeWinProbability,
+                Is.EqualTo(0.75m)
+            );
+
+            Assert.That(
+                odds.AwayWinProbability,
+                Is.EqualTo(0.25m)
+            );
+        });
+    }
+
+
+    [Test]
+    public void Lock_ShouldThrow_WhenOddsAreAlreadyLocked()
+    {
+        var odds = CreateOdds();
 
         odds.Lock();
 
@@ -90,13 +151,32 @@ public class GameOddsTests
     }
 
 
-    private static Game CreateGame()
+    [Test]
+    public void Lock_ShouldNotChangeLockedTimestamp()
     {
-        return new Game(
-            "Chiefs",
-            "Bills",
-            DateTime.UtcNow.AddHours(1),
-            DateTime.UtcNow.AddHours(4)
+        var odds = CreateOdds();
+
+        odds.Lock();
+
+        var lockedTime = odds.LockedAt;
+
+        Assert.Throws<InvalidOperationException>(() =>
+            odds.Lock()
+        );
+
+        Assert.That(
+            odds.LockedAt,
+            Is.EqualTo(lockedTime)
+        );
+    }
+
+
+    private static GameOdds CreateOdds()
+    {
+        return new GameOdds(
+            TestDataFactory.CreateGame(),
+            0.75m,
+            0.25m
         );
     }
 }

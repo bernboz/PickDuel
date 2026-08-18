@@ -1,19 +1,18 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Domain;
 
 public class ScoreEventTests
 {
     [Test]
-    public void CreatingScoreEvent_ShouldRecordScoringAdjustment()
+    public void NewScoreEvent_ShouldInitializeCorrectly()
     {
-        // Arrange
-        var user = CreateUser();
-        var league = CreateLeague();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
 
-        // Act
         var scoreEvent = new ScoreEvent(
             user,
             league,
@@ -22,26 +21,25 @@ public class ScoreEventTests
             "Correctly predicted winner"
         );
 
-        // Assert
         Assert.Multiple(() =>
         {
+            Assert.That(scoreEvent.Id, Is.Not.EqualTo(Guid.Empty));
             Assert.That(scoreEvent.User, Is.EqualTo(user));
             Assert.That(scoreEvent.League, Is.EqualTo(league));
             Assert.That(scoreEvent.Points, Is.EqualTo(5));
             Assert.That(scoreEvent.Type, Is.EqualTo(ScoreEventType.CorrectWinner));
+            Assert.That(scoreEvent.Description, Is.EqualTo("Correctly predicted winner"));
             Assert.That(scoreEvent.CreatedAt, Is.LessThanOrEqualTo(DateTime.UtcNow));
         });
     }
 
 
     [Test]
-    public void CreatingScoreEvent_ShouldSupportPenalties()
+    public void NewScoreEvent_ShouldSupportNegativePointPenalties()
     {
-        // Arrange
-        var user = CreateUser();
-        var league = CreateLeague();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
 
-        // Act
         var scoreEvent = new ScoreEvent(
             user,
             league,
@@ -50,40 +48,43 @@ public class ScoreEventTests
             "Incorrect high confidence prediction"
         );
 
-        // Assert
-        Assert.That(scoreEvent.Points, Is.EqualTo(-10));
-        Assert.That(scoreEvent.Type, Is.EqualTo(ScoreEventType.Penalty));
+        Assert.Multiple(() =>
+        {
+            Assert.That(scoreEvent.Points, Is.EqualTo(-10));
+            Assert.That(scoreEvent.Type, Is.EqualTo(ScoreEventType.Penalty));
+            Assert.That(scoreEvent.Description, Is.EqualTo("Incorrect high confidence prediction"));
+        });
     }
 
 
     [Test]
-    public void CreatingScoreEvent_ShouldAllowZeroPointEvents()
+    public void NewScoreEvent_ShouldAllowZeroPointEvents()
     {
-        // Arrange
-        var user = CreateUser();
-        var league = CreateLeague();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
 
-        // Act
         var scoreEvent = new ScoreEvent(
             user,
             league,
             0,
             ScoreEventType.CorrectWinner,
-            "Prediction outcome recorded"
+            "Prediction recorded"
         );
 
-        // Assert
-        Assert.That(scoreEvent.Points, Is.Zero);
+        Assert.That(
+            scoreEvent.Points,
+            Is.Zero
+        );
     }
 
 
     [Test]
-    public void CreatingScoreEvent_ShouldRejectMissingUser()
+    public void NewScoreEvent_ShouldThrow_WhenUserIsNull()
     {
-        // Arrange
-        var league = CreateLeague();
+        var league = TestDataFactory.CreateLeague(
+            TestDataFactory.CreateUser()
+        );
 
-        // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
             new ScoreEvent(
                 null!,
@@ -96,12 +97,10 @@ public class ScoreEventTests
 
 
     [Test]
-    public void CreatingScoreEvent_ShouldRejectMissingLeague()
+    public void NewScoreEvent_ShouldThrow_WhenLeagueIsNull()
     {
-        // Arrange
-        var user = CreateUser();
+        var user = TestDataFactory.CreateUser();
 
-        // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
             new ScoreEvent(
                 user,
@@ -114,41 +113,56 @@ public class ScoreEventTests
 
 
     [Test]
-    public void CreatingScoreEvent_ShouldRejectBlankDescriptions()
+    public void NewScoreEvent_ShouldThrow_WhenDescriptionIsEmpty()
     {
-        // Arrange
-        var user = CreateUser();
-        var league = CreateLeague();
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
 
-        // Act & Assert
         Assert.Throws<ArgumentException>(() =>
             new ScoreEvent(
                 user,
                 league,
                 5,
                 ScoreEventType.CorrectWinner,
-                " "
+                string.Empty
             ));
     }
 
 
-    private static User CreateUser()
+    [Test]
+    public void NewScoreEvent_ShouldThrow_WhenDescriptionIsWhitespace()
     {
-        return new User(
-            "Bob",
-            "Smith",
-            "bob@test.com",
-            "bob"
-        );
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        Assert.Throws<ArgumentException>(() =>
+            new ScoreEvent(
+                user,
+                league,
+                5,
+                ScoreEventType.CorrectWinner,
+                "   "
+            ));
     }
 
 
-    private static League CreateLeague()
+    [Test]
+    public void NewScoreEvent_ShouldAllowDifferentScoreEventTypes()
     {
-        return new League(
-            "NFL League",
-            SportType.NFL,
-            CreateUser()
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        var scoreEvent = new ScoreEvent(
+            user,
+            league,
+            25,
+            ScoreEventType.CorrectWinner,
+            "Correct prediction"
+        );
+
+        Assert.That(
+            scoreEvent.Type,
+            Is.EqualTo(ScoreEventType.CorrectWinner)
         );
     }
 }

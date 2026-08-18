@@ -31,6 +31,13 @@ public class Game : Entity
         {
             throw new ArgumentException("Game start time must be before end time.");
         }
+        
+        if (homeTeam == awayTeam)
+        {
+            throw new ArgumentException(
+                "Home and away teams cannot be the same."
+            );
+        }
 
         HomeTeam = homeTeam;
         AwayTeam = awayTeam;
