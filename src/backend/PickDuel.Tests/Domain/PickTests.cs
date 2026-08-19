@@ -13,9 +13,14 @@ public class PickTests
     {
         var pick = TestDataFactory.CreateFuturePick();
 
-        Assert.That(pick.Id, Is.Not.EqualTo(Guid.Empty));
-        Assert.That(pick.ConfidenceMultiplier, Is.EqualTo(3));
-        Assert.That(pick.ScorePrediction, Is.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(pick.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(pick.ConfidenceMultiplier, Is.EqualTo(3));
+            Assert.That(pick.ScorePrediction, Is.Null);
+            Assert.That(pick.IsLocked, Is.False);
+            Assert.That(pick.IsScored, Is.False);
+        });
     }
 
 
@@ -95,6 +100,19 @@ public class PickTests
 
 
     [Test]
+    public void ChangeConfidence_ShouldThrow_WhenPickIsLocked()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.Lock();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.ChangeConfidence(5)
+        );
+    }
+
+
+    [Test]
     public void ChangeSelection_ShouldUpdateTeam_WhenGameHasNotStarted()
     {
         var pick = TestDataFactory.CreateFuturePick();
@@ -114,6 +132,21 @@ public class PickTests
     public void ChangeSelection_ShouldThrow_WhenGameHasStarted()
     {
         var pick = TestDataFactory.CreateStartedPick();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.ChangeSelection(
+                pick.Game.AwayTeam
+            )
+        );
+    }
+
+
+    [Test]
+    public void ChangeSelection_ShouldThrow_WhenPickIsLocked()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.Lock();
 
         Assert.Throws<InvalidOperationException>(() =>
             pick.ChangeSelection(
@@ -192,6 +225,86 @@ public class PickTests
 
         Assert.Throws<ArgumentNullException>(() =>
             pick.UpdateScorePrediction(null!)
+        );
+    }
+
+
+    [Test]
+    public void Lock_ShouldLockPick_WhenGameHasNotStarted()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.Lock();
+
+        Assert.That(
+            pick.IsLocked,
+            Is.True
+        );
+    }
+
+
+    [Test]
+    public void Lock_ShouldThrow_WhenPickIsAlreadyLocked()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.Lock();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.Lock()
+        );
+    }
+
+
+    [Test]
+    public void Lock_ShouldThrow_WhenGameHasStarted()
+    {
+        var pick = TestDataFactory.CreateStartedPick();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.Lock()
+        );
+    }
+
+
+    [Test]
+    public void MarkAsScored_ShouldThrow_WhenPickIsNotLocked()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.MarkAsScored()
+        );
+    }
+
+
+    [Test]
+    public void MarkAsScored_ShouldMarkPickAsScored_WhenLocked()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.Lock();
+
+        pick.MarkAsScored();
+
+        Assert.That(
+            pick.IsScored,
+            Is.True
+        );
+    }
+
+
+    [Test]
+    public void MarkAsScored_ShouldThrow_WhenAlreadyScored()
+    {
+        var pick = TestDataFactory.CreateFuturePick();
+
+        pick.Lock();
+
+        pick.MarkAsScored();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            pick.MarkAsScored()
         );
     }
 }

@@ -39,17 +39,13 @@ public class PlayoffRound : Entity
 
         if (roundNumber < 1)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(roundNumber)
-            );
+            throw new ArgumentOutOfRangeException(nameof(roundNumber));
         }
 
         Bracket = bracket;
         Name = name;
         RoundNumber = roundNumber;
-
         IsCompleted = false;
-
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -57,14 +53,29 @@ public class PlayoffRound : Entity
     /// <summary>
     /// Adds a playoff matchup to this round.
     /// </summary>
+    /// <param name="matchup">Playoff matchup being added.</param>
     public void AddMatchup(PlayoffMatchup matchup)
     {
         ArgumentNullException.ThrowIfNull(matchup);
 
+        if (matchup.Round != this)
+        {
+            throw new InvalidOperationException(
+                "Matchup must belong to this round."
+            );
+        }
+
+        if (IsCompleted)
+        {
+            throw new InvalidOperationException(
+                "Cannot add matchups after round completion."
+            );
+        }
+
         if (_matchups.Contains(matchup))
         {
             throw new InvalidOperationException(
-                "Playoff matchup already exists in this round."
+                "Matchup already exists in this round."
             );
         }
 
@@ -73,14 +84,48 @@ public class PlayoffRound : Entity
 
 
     /// <summary>
-    /// Marks the round as completed once all matchups are finished.
+    /// Retrieves the users who won this playoff round.
+    /// </summary>
+    /// <returns>The users advancing to the next playoff round.</returns>
+    public IReadOnlyCollection<User> GetWinners()
+    {
+        if (!IsCompleted)
+        {
+            throw new InvalidOperationException(
+                "Round must be completed first."
+            );
+        }
+
+        if (_matchups.Any(x => x.Winner == null))
+        {
+            throw new InvalidOperationException(
+                "All matchups must have winners before advancing."
+            );
+        }
+
+        return _matchups
+            .Select(x => x.Winner!)
+            .ToList()
+            .AsReadOnly();
+    }
+
+
+    /// <summary>
+    /// Marks the playoff round as completed once all matchups have winners.
     /// </summary>
     public void Complete()
     {
+        if (_matchups.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Round must contain matchups."
+            );
+        }
+
         if (_matchups.Any(x => !x.IsCompleted))
         {
             throw new InvalidOperationException(
-                "Cannot complete round with unfinished matchups."
+                "All matchups must be completed."
             );
         }
 

@@ -1,22 +1,20 @@
 using PickDuel.Domain.Entities;
-using PickDuel.Domain.Enums;
 
 namespace PickDuel.Application.Scoring;
 
-public class PickResultProcessor
+public class PickResultProcessor : IPickResultProcessor
 {
-    private readonly PickScoringService _pickScoringService;
+    private readonly IPickScoringService _pickScoringService;
 
-    private readonly ScoreEventFactory _scoreEventFactory;
-    
+    private readonly IScoreEventFactory _scoreEventFactory;
+
+
     /// <summary>
-    /// Initializes a new PickResultProcessor with the required scoring service.
+    /// Initializes a new PickResultProcessor with scoring dependencies.
     /// </summary>
     /// <param name="pickScoringService">Service used to calculate prediction points.</param>
-    /// <param name="scoreEventFactory">ScoreEventFactory to create scoreevents</param>
-    public PickResultProcessor(
-        PickScoringService pickScoringService,
-        ScoreEventFactory scoreEventFactory)
+    /// <param name="scoreEventFactory">Factory used to create score events.</param>
+    public PickResultProcessor(IPickScoringService pickScoringService, IScoreEventFactory scoreEventFactory)
     {
         ArgumentNullException.ThrowIfNull(pickScoringService);
         ArgumentNullException.ThrowIfNull(scoreEventFactory);
@@ -24,25 +22,27 @@ public class PickResultProcessor
         _pickScoringService = pickScoringService;
         _scoreEventFactory = scoreEventFactory;
     }
-    
+
+
     /// <summary>
     /// Processes a completed pick evaluation and creates a score event.
     /// </summary>
     /// <param name="context">Context containing the pick, result, and odds information.</param>
-    /// <returns>A ScoreEvent representing the prediction outcome.</returns>
-    public ScoreEvent ProcessPickResult(
-        PickEvaluationContext context)
+    /// <returns>A score event representing the prediction outcome.</returns>
+    public ScoreEvent ProcessPickResult(PickEvaluationContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var points = _pickScoringService.CalculateTotalPoints(context);
+        var points =
+            _pickScoringService.CalculateTotalPoints(context);
 
         return _scoreEventFactory.Create(
             context,
             points
         );
     }
-    
+
+
     /// <summary>
     /// Applies a completed score event to a league standing.
     /// Updates points and prediction statistics.

@@ -27,15 +27,12 @@ public class PlayoffBracket : Entity
         ArgumentNullException.ThrowIfNull(season);
 
         Season = season;
-
-        IsCompleted = false;
-
         CreatedAt = DateTime.UtcNow;
     }
 
 
     /// <summary>
-    /// Generates the opening playoff round from the qualified season standings.
+    /// Generates the opening playoff round from qualified season standings.
     /// </summary>
     /// <param name="standings">Season standings containing playoff qualifiers.</param>
     public void GenerateBracket(SeasonStandings standings)
@@ -52,14 +49,14 @@ public class PlayoffBracket : Entity
         if (!Season.IsCompleted)
         {
             throw new InvalidOperationException(
-                "Cannot generate a playoff bracket until the season has ended."
+                "Season must be completed before generating playoffs."
             );
         }
 
         if (_rounds.Count > 0)
         {
             throw new InvalidOperationException(
-                "Playoff bracket has already been generated."
+                "Playoff bracket already exists."
             );
         }
 
@@ -72,31 +69,27 @@ public class PlayoffBracket : Entity
             );
         }
 
-        string roundName = qualifiers.Count switch
-        {
-            2 => "Championship",
-            4 => "Semifinals",
-            8 => "Quarterfinals",
-            16 => "Round of 16",
-            _ => "Playoffs"
-        };
-
         var round = new PlayoffRound(
             this,
-            roundName,
+            qualifiers.Count switch
+            {
+                2 => "Championship",
+                4 => "Semifinals",
+                8 => "Quarterfinals",
+                16 => "Round of 16",
+                _ => "Opening Round"
+            },
             1
         );
 
+
         for (int i = 0; i < qualifiers.Count / 2; i++)
         {
-            var higherSeed = qualifiers.ElementAt(i);
-            var lowerSeed = qualifiers.ElementAt(qualifiers.Count - 1 - i);
-
             round.AddMatchup(
                 new PlayoffMatchup(
                     round,
-                    higherSeed.User,
-                    lowerSeed.User
+                    qualifiers.ElementAt(i).User,
+                    qualifiers.ElementAt(qualifiers.Count - 1 - i).User
                 )
             );
         }
@@ -106,9 +99,8 @@ public class PlayoffBracket : Entity
 
 
     /// <summary>
-    /// Adds a playoff round to the bracket.
+    /// Adds a playoff round to this bracket.
     /// </summary>
-    /// <param name="round">Playoff round to add.</param>
     public void AddRound(PlayoffRound round)
     {
         ArgumentNullException.ThrowIfNull(round);
@@ -116,48 +108,128 @@ public class PlayoffBracket : Entity
         if (round.Bracket != this)
         {
             throw new InvalidOperationException(
-                "Round must belong to this playoff bracket."
+                "Round must belong to this bracket."
             );
         }
 
         if (_rounds.Contains(round))
         {
             throw new InvalidOperationException(
-                "Playoff round already exists in this bracket."
+                "Round already exists."
             );
         }
 
         _rounds.Add(round);
     }
+    
+    /// <summary>
+    /// Creates the next playoff round from the previous round winners.
+    /// </summary>
+    /// <returns>The newly created playoff round.</returns>
+    public PlayoffRound CreateNextRound()
+    {
+        if (_rounds.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Cannot create next round before the bracket starts."
+            );
+        }
 
+        var currentRound =
+            _rounds.Last();
+
+        if (!currentRound.IsCompleted)
+        {
+            throw new InvalidOperationException(
+                "Current round must be completed before advancing."
+            );
+        }
+
+
+        var winners =
+            currentRound.GetWinners();
+
+
+        if (winners.Count < 2)
+        {
+            throw new InvalidOperationException(
+                "Not enough winners to create another round."
+            );
+        }
+
+
+        var nextRoundNumber =
+            currentRound.RoundNumber + 1;
+
+
+        var nextRound =
+            new PlayoffRound(
+                this,
+                GetRoundName(winners.Count),
+                nextRoundNumber
+            );
+
+
+        for (int i = 0; i < winners.Count; i += 2)
+        {
+            nextRound.AddMatchup(
+                new PlayoffMatchup(
+                    nextRound,
+                    winners.ElementAt(i),
+                    winners.ElementAt(i + 1)
+                )
+            );
+        }
+
+
+        AddRound(nextRound);
+
+        return nextRound;
+    }
+
+    private static string GetRoundName(int participantCount)
+    {
+        return participantCount switch
+        {
+            2 => "Championship",
+            4 => "Semifinals",
+            8 => "Quarterfinals",
+            16 => "Round of 16",
+            _ => "Playoff Round"
+        };
+    }
 
     /// <summary>
-    /// Sets the playoff champion and completes the bracket.
+    /// Sets the playoff champion.
     /// </summary>
-    /// <param name="champion">User who won the championship.</param>
     public void SetChampion(User champion)
     {
         ArgumentNullException.ThrowIfNull(champion);
 
-        Champion = champion;
+        if (!_rounds.Any(r =>
+            r.Matchups.Any(m => m.Winner == champion)))
+        {
+            throw new InvalidOperationException(
+                "Champion must have won a playoff matchup."
+            );
+        }
 
-        IsCompleted = true;
+        Champion = champion;
     }
 
 
     /// <summary>
-    /// Marks the playoff bracket as completed.
+    /// Completes the playoff tournament.
     /// </summary>
     public void Complete()
     {
         if (Champion == null)
         {
             throw new InvalidOperationException(
-                "Cannot complete playoff bracket without a champion."
+                "Cannot complete playoffs without a champion."
             );
         }
 
         IsCompleted = true;
     }
-    
 }

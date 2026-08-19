@@ -182,7 +182,97 @@ public class PickResultProcessorTests
                 null!
             ));
     }
+    
+    [Test]
+    public void ProcessPickResult_ShouldUseScoringService()
+    {
+        var rule =
+            Substitute.For<IPickScoringRule>();
 
+        rule.CalculatePoints(
+                Arg.Any<PickEvaluationContext>())
+            .Returns(25);
+
+        var factory =
+            Substitute.For<IScoringRuleFactory>();
+
+        factory.GetRules(
+                Arg.Any<PickEvaluationContext>()
+            )
+            .Returns(new[] { rule });
+
+
+        var service =
+            new PickScoringService(factory);
+
+        var processor =
+            new PickResultProcessor(
+                service,
+                new ScoreEventFactory()
+            );
+
+        var context =
+            TestDataFactory.CreateCorrectPredictionContext();
+
+        processor.ProcessPickResult(context);
+
+        rule.Received(1)
+            .CalculatePoints(context);
+    }
+
+    [Test]
+    public void ApplyScoreEvent_ShouldAccumulatePoints()
+    {
+        var processor =
+            CreateProcessor(10);
+
+        var standing =
+            CreateStanding();
+
+        processor.ApplyScoreEvent(
+            CreateScoreEvent(
+                10,
+                ScoreEventType.CorrectWinner
+            ),
+            standing
+        );
+
+        processor.ApplyScoreEvent(
+            CreateScoreEvent(
+                25,
+                ScoreEventType.ExactScore
+            ),
+            standing
+        );
+
+        Assert.That(
+            standing.TotalPoints,
+            Is.EqualTo(35)
+        );
+    }
+    
+    [Test]
+    public void ApplyScoreEvent_ShouldApplyNegativePoints()
+    {
+        var processor =
+            CreateProcessor(-25);
+
+        var standing =
+            CreateStanding();
+
+        processor.ApplyScoreEvent(
+            CreateScoreEvent(
+                -25,
+                ScoreEventType.Penalty
+            ),
+            standing
+        );
+
+        Assert.That(
+            standing.TotalPoints,
+            Is.EqualTo(-25)
+        );
+    }
 
     private static PickResultProcessor CreateProcessor(int points)
     {
@@ -200,9 +290,16 @@ public class PickResultProcessorTests
         rule.CalculatePoints(Arg.Any<PickEvaluationContext>())
             .Returns(points);
 
-        return new PickScoringService(
-            new[] { rule }
-        );
+        var factory =
+            Substitute.For<IScoringRuleFactory>();
+
+        factory.GetRules(
+                Arg.Any<PickEvaluationContext>()
+            )
+            .Returns(new[] { rule });
+
+
+        return new PickScoringService(factory);
     }
 
 

@@ -3,7 +3,7 @@ using PickDuel.Domain.Enums;
 
 namespace PickDuel.Application.Scoring;
 
-public class ScoreEventFactory
+public class ScoreEventFactory : IScoreEventFactory
 {
     public ScoreEvent Create(
         PickEvaluationContext context,

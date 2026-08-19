@@ -9,7 +9,7 @@ namespace PickDuel.Tests.Application;
 public class PickScoringServiceTests
 {
     [Test]
-    public void Constructor_ShouldThrow_WhenRulesAreNull()
+    public void Constructor_ShouldThrow_WhenFactoryIsNull()
     {
         Assert.Throws<ArgumentNullException>(() =>
             new PickScoringService(null!)
@@ -130,13 +130,55 @@ public class PickScoringServiceTests
         secondRule.Received(1)
             .CalculatePoints(context);
     }
+    
+    [Test]
+    public void CalculateTotalPoints_ShouldRequestRulesFromFactory()
+    {
+        var rule =
+            Substitute.For<IPickScoringRule>();
+
+        rule.CalculatePoints(
+                Arg.Any<PickEvaluationContext>()
+            )
+            .Returns(10);
+
+
+        var factory =
+            Substitute.For<IScoringRuleFactory>();
+
+        factory.GetRules(
+                Arg.Any<PickEvaluationContext>()
+            )
+            .Returns(new[] { rule });
+
+
+        var service =
+            new PickScoringService(factory);
+
+
+        var context =
+            TestDataFactory.CreateCorrectPredictionContext();
+
+
+        service.CalculateTotalPoints(context);
+
+
+        factory.Received(1)
+            .GetRules(context);
+    }
 
 
     private static IPickScoringService CreateService(params IPickScoringRule[] rules)
     {
-        return new PickScoringService(
-            rules.ToList()
-        );
+        var factory =
+            Substitute.For<IScoringRuleFactory>();
+
+        factory.GetRules(
+                Arg.Any<PickEvaluationContext>()
+            )
+            .Returns(rules);
+
+        return new PickScoringService(factory);
     }
 
 

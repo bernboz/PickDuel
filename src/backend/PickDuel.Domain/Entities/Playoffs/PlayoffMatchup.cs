@@ -22,7 +22,10 @@ public class PlayoffMatchup : Entity
     public DateTime CreatedAt { get; private set; }
 
 
-    public PlayoffMatchup(PlayoffRound round, User userOne, User userTwo)
+    public PlayoffMatchup(
+        PlayoffRound round,
+        User userOne,
+        User userTwo)
     {
         ArgumentNullException.ThrowIfNull(round);
         ArgumentNullException.ThrowIfNull(userOne);
@@ -31,7 +34,7 @@ public class PlayoffMatchup : Entity
         if (userOne == userTwo)
         {
             throw new ArgumentException(
-                "Users in a playoff matchup must be different."
+                "Users must be different."
             );
         }
 
@@ -39,28 +42,56 @@ public class PlayoffMatchup : Entity
         UserOne = userOne;
         UserTwo = userTwo;
 
-        IsCompleted = false;
-
         CreatedAt = DateTime.UtcNow;
     }
 
 
     /// <summary>
-    /// Completes the matchup and advances the winner.
+    /// Completes the matchup with the winning user.
     /// </summary>
     public void Complete(User winner)
     {
         ArgumentNullException.ThrowIfNull(winner);
 
-        if (winner != UserOne && winner != UserTwo)
+        if (IsCompleted)
         {
             throw new InvalidOperationException(
-                "Winner must participate in the matchup."
+                "Matchup already completed."
+            );
+        }
+
+        if (winner != UserOne &&
+            winner != UserTwo)
+        {
+            throw new InvalidOperationException(
+                "Winner must participate in matchup."
             );
         }
 
         Winner = winner;
-
         IsCompleted = true;
+    }
+
+
+    /// <summary>
+    /// Gets the opposing user in this matchup.
+    /// </summary>
+    public User GetOpponent(User user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        if (user == UserOne)
+        {
+            return UserTwo;
+        }
+
+        if (user == UserTwo)
+        {
+            return UserOne;
+        }
+
+        throw new InvalidOperationException(
+            "User is not part of this matchup."
+        );
     }
 }
