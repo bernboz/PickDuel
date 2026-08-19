@@ -1,5 +1,5 @@
+using PickDuel.Application.Repositories.Interfaces;
 using PickDuel.Domain.Entities;
-using PickDuel.Infrastructure.Repositories.Interfaces;
 
 namespace PickDuel.Application.Picks;
 
@@ -13,9 +13,11 @@ public class PickService : IPickService
 
 
     /// <summary>
-    /// Initializes a new PickService with required dependencies.
+    /// Initializes a new instance of the <see cref="PickService"/> class.
     /// </summary>
-    /// <param name="pickRepository">Repository used for pick persistence.</param>
+    /// <param name="pickRepository">
+    /// Repository used for pick persistence.
+    /// </param>
     public PickService(IPickRepository pickRepository)
     {
         ArgumentNullException.ThrowIfNull(pickRepository);
@@ -25,17 +27,25 @@ public class PickService : IPickService
 
 
     /// <summary>
-    /// Creates a new prediction pick for a user.
+    /// Creates a new prediction pick for a user in a league.
     /// </summary>
     /// <param name="pick">Pick to create.</param>
+    /// <param name="cancellationToken">
+    /// Token used to cancel the operation.
+    /// </param>
     /// <returns>The created pick.</returns>
-    public async Task<Pick> CreatePickAsync(Pick pick)
+    public async Task<Pick> CreatePickAsync(Pick pick, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(pick);
 
-        await _pickRepository.AddAsync(pick);
+        await _pickRepository.AddAsync(
+            pick,
+            cancellationToken
+        );
 
-        await _pickRepository.SaveChangesAsync();
+        await _pickRepository.SaveChangesAsync(
+            cancellationToken
+        );
 
         return pick;
     }
@@ -46,15 +56,26 @@ public class PickService : IPickService
     /// </summary>
     /// <param name="userId">User identifier.</param>
     /// <param name="gameId">Game identifier.</param>
+    /// <param name="cancellationToken">
+    /// Token used to cancel the operation.
+    /// </param>
     /// <returns>The user's pick if found.</returns>
-    public async Task<Pick?> GetUserPickForGameAsync(Guid userId, Guid gameId)
+    public async Task<Pick?> GetUserPickForGameAsync(Guid userId, Guid gameId, CancellationToken cancellationToken = default)
     {
-        ValidateId(userId, nameof(userId));
-        ValidateId(gameId, nameof(gameId));
+        ValidateId(
+            userId,
+            nameof(userId)
+        );
+
+        ValidateId(
+            gameId,
+            nameof(gameId)
+        );
 
         return await _pickRepository.GetUserPickForGameAsync(
             userId,
-            gameId
+            gameId,
+            cancellationToken
         );
     }
 
@@ -63,12 +84,21 @@ public class PickService : IPickService
     /// Retrieves all picks made by a user.
     /// </summary>
     /// <param name="userId">User identifier.</param>
+    /// <param name="cancellationToken">
+    /// Token used to cancel the operation.
+    /// </param>
     /// <returns>Collection of user picks.</returns>
-    public async Task<IReadOnlyCollection<Pick>> GetUserPicksAsync(Guid userId)
+    public async Task<IReadOnlyCollection<Pick>> GetUserPicksAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        ValidateId(userId, nameof(userId));
+        ValidateId(
+            userId,
+            nameof(userId)
+        );
 
-        return await _pickRepository.GetByUserIdAsync(userId);
+        return await _pickRepository.GetByUserIdAsync(
+            userId,
+            cancellationToken
+        );
     }
 
 
@@ -76,14 +106,22 @@ public class PickService : IPickService
     /// Updates an existing pick before the associated game begins.
     /// </summary>
     /// <param name="pick">Updated pick.</param>
+    /// <param name="cancellationToken">
+    /// Token used to cancel the operation.
+    /// </param>
     /// <returns>The updated pick.</returns>
-    public async Task<Pick> UpdatePickAsync(Pick pick)
+    public async Task<Pick> UpdatePickAsync(Pick pick, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(pick);
 
-        await _pickRepository.UpdateAsync(pick);
+        await _pickRepository.UpdateAsync(
+            pick,
+            cancellationToken
+        );
 
-        await _pickRepository.SaveChangesAsync();
+        await _pickRepository.SaveChangesAsync(
+            cancellationToken
+        );
 
         return pick;
     }
@@ -93,12 +131,20 @@ public class PickService : IPickService
     /// Deletes a user's pick.
     /// </summary>
     /// <param name="pickId">Pick identifier.</param>
-    public async Task DeletePickAsync(Guid pickId)
+    /// <param name="cancellationToken">
+    /// Token used to cancel the operation.
+    /// </param>
+    public async Task DeletePickAsync(Guid pickId, CancellationToken cancellationToken = default)
     {
-        ValidateId(pickId, nameof(pickId));
+        ValidateId(
+            pickId,
+            nameof(pickId)
+        );
 
-        var pick =
-            await _pickRepository.GetByIdAsync(pickId);
+        var pick = await _pickRepository.GetByIdAsync(
+            pickId,
+            cancellationToken
+        );
 
         if (pick == null)
         {
@@ -107,15 +153,23 @@ public class PickService : IPickService
             );
         }
 
-        await _pickRepository.DeleteAsync(pick);
+        await _pickRepository.DeleteAsync(
+            pick,
+            cancellationToken
+        );
 
-        await _pickRepository.SaveChangesAsync();
+        await _pickRepository.SaveChangesAsync(
+            cancellationToken
+        );
     }
 
 
-    private static void ValidateId(
-        Guid id,
-        string parameterName)
+    /// <summary>
+    /// Validates that an identifier contains a valid value.
+    /// </summary>
+    /// <param name="id">Identifier to validate.</param>
+    /// <param name="parameterName">Parameter name used for exceptions.</param>
+    private static void ValidateId(Guid id, string parameterName)
     {
         if (id == Guid.Empty)
         {

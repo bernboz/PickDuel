@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PickDuel.Domain\PickDuel.Domain.csproj" />
     <ProjectReference Include="..\PickDuel.Application\PickDuel.Application.csproj" />
+    <ProjectReference Include="..\PickDuel.Infrastructure\PickDuel.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

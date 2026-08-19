@@ -1,8 +1,8 @@
 using NSubstitute;
 using NUnit.Framework;
 using PickDuel.Application.Picks;
+using PickDuel.Application.Repositories.Interfaces;
 using PickDuel.Domain.Entities;
-using PickDuel.Infrastructure.Repositories.Interfaces;
 using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Application.Picks;
@@ -35,10 +35,15 @@ public class PickServiceTests
         );
 
         await repository.Received(1)
-            .AddAsync(pick);
+            .AddAsync(
+                pick,
+                Arg.Any<CancellationToken>()
+            );
 
         await repository.Received(1)
-            .SaveChangesAsync();
+            .SaveChangesAsync(
+                Arg.Any<CancellationToken>()
+            );
     }
 
 
@@ -62,7 +67,8 @@ public class PickServiceTests
 
         repository.GetUserPickForGameAsync(
                 pick.User.Id,
-                pick.Game.Id)
+                pick.Game.Id,
+                Arg.Any<CancellationToken>())
             .Returns(pick);
 
         var service = new PickService(repository);
@@ -81,7 +87,8 @@ public class PickServiceTests
         await repository.Received(1)
             .GetUserPickForGameAsync(
                 pick.User.Id,
-                pick.Game.Id
+                pick.Game.Id,
+                Arg.Any<CancellationToken>()
             );
     }
 
@@ -93,7 +100,8 @@ public class PickServiceTests
 
         repository.GetUserPickForGameAsync(
                 Arg.Any<Guid>(),
-                Arg.Any<Guid>())
+                Arg.Any<Guid>(),
+                Arg.Any<CancellationToken>())
             .Returns((Pick?)null);
 
         var service = new PickService(repository);
@@ -137,7 +145,8 @@ public class PickServiceTests
             };
 
         repository.GetByUserIdAsync(
-                Arg.Any<Guid>())
+                picks[0].User.Id,
+                Arg.Any<CancellationToken>())
             .Returns(picks);
 
         var service = new PickService(repository);
@@ -154,7 +163,8 @@ public class PickServiceTests
 
         await repository.Received(1)
             .GetByUserIdAsync(
-                picks[0].User.Id
+                picks[0].User.Id,
+                Arg.Any<CancellationToken>()
             );
     }
 
@@ -177,10 +187,15 @@ public class PickServiceTests
         );
 
         await repository.Received(1)
-            .UpdateAsync(pick);
+            .UpdateAsync(
+                pick,
+                Arg.Any<CancellationToken>()
+            );
 
         await repository.Received(1)
-            .SaveChangesAsync();
+            .SaveChangesAsync(
+                Arg.Any<CancellationToken>()
+            );
     }
 
 
@@ -200,15 +215,14 @@ public class PickServiceTests
     {
         var repository = CreateRepository();
 
-        var pick =
-            TestDataFactory.CreateFuturePick();
+        var pick = TestDataFactory.CreateFuturePick();
 
         repository.GetByIdAsync(
-                pick.Id)
+                pick.Id,
+                Arg.Any<CancellationToken>())
             .Returns(pick);
 
-        var service =
-            new PickService(repository);
+        var service = new PickService(repository);
 
         await service.DeletePickAsync(
             pick.Id
@@ -216,16 +230,20 @@ public class PickServiceTests
 
         await repository.Received(1)
             .GetByIdAsync(
-                pick.Id
+                pick.Id,
+                Arg.Any<CancellationToken>()
             );
 
         await repository.Received(1)
             .DeleteAsync(
-                pick
+                pick,
+                Arg.Any<CancellationToken>()
             );
 
         await repository.Received(1)
-            .SaveChangesAsync();
+            .SaveChangesAsync(
+                Arg.Any<CancellationToken>()
+            );
     }
 
 
@@ -235,7 +253,8 @@ public class PickServiceTests
         var repository = CreateRepository();
 
         repository.GetByIdAsync(
-                Arg.Any<Guid>())
+                Arg.Any<Guid>(),
+                Arg.Any<CancellationToken>())
             .Returns((Pick?)null);
 
         var service =
@@ -275,19 +294,23 @@ public class PickServiceTests
         var repository =
             Substitute.For<IPickRepository>();
 
-        repository.SaveChangesAsync()
+        repository.SaveChangesAsync(
+                Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         repository.AddAsync(
-                Arg.Any<Pick>())
+                Arg.Any<Pick>(),
+                Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         repository.UpdateAsync(
-                Arg.Any<Pick>())
+                Arg.Any<Pick>(),
+                Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         repository.DeleteAsync(
-                Arg.Any<Pick>())
+                Arg.Any<Pick>(),
+                Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         return repository;

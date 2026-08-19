@@ -1,6 +1,6 @@
 using PickDuel.Domain.Common;
-using PickDuel.Domain.ValueObjects;
 using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Domain.Entities;
 

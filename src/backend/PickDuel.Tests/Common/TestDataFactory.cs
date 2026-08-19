@@ -1,8 +1,8 @@
 using PickDuel.Application.Scoring;
 using PickDuel.Domain.Entities;
-using PickDuel.Domain.Enums;
-using PickDuel.Domain.Entities.Predictions;
 using PickDuel.Domain.Entities.History;
+using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.Enums;
 using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Tests.Common;

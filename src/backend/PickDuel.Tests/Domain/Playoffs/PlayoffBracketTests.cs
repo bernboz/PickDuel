@@ -1,7 +1,7 @@
 using NUnit.Framework;
-using PickDuel.Tests.Common;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Entities.Playoffs;
+using PickDuel.Tests.Common;
 
 namespace PickDuel.Tests.Domain.Playoffs;
 
