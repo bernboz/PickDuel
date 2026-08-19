@@ -12,7 +12,7 @@ The goal of PickDuel is to combine the competitive experience of fantasy sports 
 
 ## Current Development Status
 
-🚧 Backend domain and application architecture actively under development.
+Backend domain and application architecture actively under development.
 
 Completed foundations:
 
