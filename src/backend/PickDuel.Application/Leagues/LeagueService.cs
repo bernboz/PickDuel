@@ -1,5 +1,6 @@
 using PickDuel.Application.Repositories.Interfaces;
 using PickDuel.Domain.Entities;
+using PickDuel.Application.Common;
 
 namespace PickDuel.Application.Leagues;
 
@@ -31,14 +32,14 @@ public class LeagueService : ILeagueService
     
     public async Task<League?> GetLeagueAsync(Guid leagueId, CancellationToken cancellationToken = default)
     {
-        ValidateId(leagueId, nameof(leagueId));
+        Guard.AgainstEmptyGuid(leagueId, nameof(leagueId));
 
         return await _leagueRepository.GetByIdAsync(leagueId, cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<League>> GetUserLeaguesAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        ValidateId(userId, nameof(userId));
+        Guard.AgainstEmptyGuid(userId, nameof(userId));
 
         var owned = await _leagueRepository.GetByOwnerIdAsync(userId, cancellationToken);
 
@@ -53,7 +54,7 @@ public class LeagueService : ILeagueService
 
     public async Task AddMemberAsync(Guid leagueId, User user, CancellationToken cancellationToken = default)
     {
-        ValidateId(leagueId, nameof(leagueId));
+        Guard.AgainstEmptyGuid(leagueId, nameof(leagueId));
 
         ArgumentNullException.ThrowIfNull(user);
 
@@ -84,7 +85,7 @@ public class LeagueService : ILeagueService
 
     public async Task DeleteLeagueAsync(Guid leagueId, CancellationToken cancellationToken = default)
     {
-        ValidateId(leagueId, nameof(leagueId));
+        Guard.AgainstEmptyGuid(leagueId, nameof(leagueId));
 
         var league = await _leagueRepository.GetByIdAsync(leagueId, cancellationToken);
 
@@ -96,15 +97,5 @@ public class LeagueService : ILeagueService
         await _leagueRepository.DeleteAsync(league, cancellationToken);
 
         await _leagueRepository.SaveChangesAsync(cancellationToken);
-    }
-
-    private static void ValidateId(Guid id, string parameterName)
-    {
-        if (id == Guid.Empty)
-        {
-            throw new ArgumentException(
-                "Identifier cannot be empty.",
-                parameterName);
-        }
     }
 }

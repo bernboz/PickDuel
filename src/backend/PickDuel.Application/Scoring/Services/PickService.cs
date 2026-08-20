@@ -1,5 +1,6 @@
 using PickDuel.Application.Repositories.Interfaces;
 using PickDuel.Domain.Entities;
+using PickDuel.Application.Common;
 
 namespace PickDuel.Application.Picks;
 
@@ -62,12 +63,12 @@ public class PickService : IPickService
     /// <returns>The user's pick if found.</returns>
     public async Task<Pick?> GetUserPickForGameAsync(Guid userId, Guid gameId, CancellationToken cancellationToken = default)
     {
-        ValidateId(
+        Guard.AgainstEmptyGuid(
             userId,
             nameof(userId)
         );
 
-        ValidateId(
+        Guard.AgainstEmptyGuid(
             gameId,
             nameof(gameId)
         );
@@ -90,7 +91,7 @@ public class PickService : IPickService
     /// <returns>Collection of user picks.</returns>
     public async Task<IReadOnlyCollection<Pick>> GetUserPicksAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        ValidateId(
+        Guard.AgainstEmptyGuid(
             userId,
             nameof(userId)
         );
@@ -136,7 +137,7 @@ public class PickService : IPickService
     /// </param>
     public async Task DeletePickAsync(Guid pickId, CancellationToken cancellationToken = default)
     {
-        ValidateId(
+        Guard.AgainstEmptyGuid(
             pickId,
             nameof(pickId)
         );
@@ -161,22 +162,5 @@ public class PickService : IPickService
         await _pickRepository.SaveChangesAsync(
             cancellationToken
         );
-    }
-
-
-    /// <summary>
-    /// Validates that an identifier contains a valid value.
-    /// </summary>
-    /// <param name="id">Identifier to validate.</param>
-    /// <param name="parameterName">Parameter name used for exceptions.</param>
-    private static void ValidateId(Guid id, string parameterName)
-    {
-        if (id == Guid.Empty)
-        {
-            throw new ArgumentException(
-                "Identifier cannot be empty.",
-                parameterName
-            );
-        }
     }
 }

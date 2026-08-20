@@ -1,5 +1,6 @@
 using PickDuel.Application.Repositories.Interfaces;
 using PickDuel.Domain.Entities;
+using PickDuel.Application.Common;
 
 namespace PickDuel.Application.Games;
 
@@ -64,7 +65,7 @@ public class GameService : IGameService
     /// </returns>
     public async Task<Game?> GetGameAsync(Guid gameId, CancellationToken cancellationToken = default)
     {
-        ValidateId(gameId, nameof(gameId));
+        Guard.AgainstEmptyGuid(gameId, nameof(gameId));
 
         return await _gameRepository.GetByIdAsync(
             gameId,
@@ -137,7 +138,7 @@ public class GameService : IGameService
     /// </param>
     public async Task DeleteGameAsync(Guid gameId, CancellationToken cancellationToken = default)
     {
-        ValidateId(gameId, nameof(gameId));
+        Guard.AgainstEmptyGuid(gameId, nameof(gameId));
 
         var game = await _gameRepository.GetByIdAsync(
             gameId,
@@ -157,16 +158,5 @@ public class GameService : IGameService
 
         await _gameRepository.SaveChangesAsync(
             cancellationToken);
-    }
-
-
-    private static void ValidateId(Guid id, string parameterName)
-    {
-        if (id == Guid.Empty)
-        {
-            throw new ArgumentException(
-                "Identifier cannot be empty.",
-                parameterName);
-        }
     }
 }
