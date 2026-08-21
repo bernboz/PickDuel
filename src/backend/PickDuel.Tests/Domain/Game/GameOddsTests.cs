@@ -2,7 +2,7 @@ using NUnit.Framework;
 using PickDuel.Domain.Entities;
 using PickDuel.Tests.Common;
 
-namespace PickDuel.Tests.Domain;
+namespace PickDuel.Tests.Domain.Game;
 
 public class GameOddsTests
 {

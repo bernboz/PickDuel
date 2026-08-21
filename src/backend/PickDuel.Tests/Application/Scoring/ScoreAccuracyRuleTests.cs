@@ -3,7 +3,7 @@ using PickDuel.Application.Scoring;
 using PickDuel.Domain.ValueObjects;
 using PickDuel.Tests.Common;
 
-namespace PickDuel.Tests.Application;
+namespace PickDuel.Tests.Application.Scoring;
 
 public class ScoreAccuracyRuleTests
 {

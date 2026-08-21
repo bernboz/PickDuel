@@ -2,9 +2,6 @@ using PickDuel.Domain.Entities;
 
 namespace PickDuel.Application.Repositories.Interfaces;
 
-/// <summary>
-/// Defines persistence operations for game entities.
-/// </summary>
 public interface IGameRepository
 {
     /// <summary>

@@ -12,13 +12,23 @@ public class ScoreEventTests
     {
         var user = TestDataFactory.CreateUser();
         var league = TestDataFactory.CreateLeague(user);
+        var game = TestDataFactory.CreateGame();
+
+        var pick = TestDataFactory.CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam,
+            1
+        );
 
         var scoreEvent = new ScoreEvent(
             user,
             league,
             5,
             ScoreEventType.CorrectWinner,
-            "Correctly predicted winner"
+            "Correctly predicted winner",
+            pick
         );
 
         Assert.Multiple(() =>
@@ -26,11 +36,33 @@ public class ScoreEventTests
             Assert.That(scoreEvent.Id, Is.Not.EqualTo(Guid.Empty));
             Assert.That(scoreEvent.User, Is.EqualTo(user));
             Assert.That(scoreEvent.League, Is.EqualTo(league));
+            Assert.That(scoreEvent.Pick, Is.EqualTo(pick));
             Assert.That(scoreEvent.Points, Is.EqualTo(5));
             Assert.That(scoreEvent.Type, Is.EqualTo(ScoreEventType.CorrectWinner));
             Assert.That(scoreEvent.Description, Is.EqualTo("Correctly predicted winner"));
             Assert.That(scoreEvent.CreatedAt, Is.LessThanOrEqualTo(DateTime.UtcNow));
         });
+    }
+
+
+    [Test]
+    public void NewScoreEvent_ShouldAllowNullPick()
+    {
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        var scoreEvent = new ScoreEvent(
+            user,
+            league,
+            5,
+            ScoreEventType.Bonus,
+            "League bonus awarded"
+        );
+
+        Assert.That(
+            scoreEvent.Pick,
+            Is.Null
+        );
     }
 
 
@@ -67,7 +99,7 @@ public class ScoreEventTests
             user,
             league,
             0,
-            ScoreEventType.CorrectWinner,
+            ScoreEventType.Neutral,
             "Prediction recorded"
         );
 
@@ -147,6 +179,40 @@ public class ScoreEventTests
 
 
     [Test]
+    public void NewScoreEvent_ShouldThrow_WhenPenaltyHasPositivePoints()
+    {
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        Assert.Throws<ArgumentException>(() =>
+            new ScoreEvent(
+                user,
+                league,
+                10,
+                ScoreEventType.Penalty,
+                "Invalid penalty"
+            ));
+    }
+
+
+    [Test]
+    public void NewScoreEvent_ShouldThrow_WhenNonPenaltyHasNegativePoints()
+    {
+        var user = TestDataFactory.CreateUser();
+        var league = TestDataFactory.CreateLeague(user);
+
+        Assert.Throws<ArgumentException>(() =>
+            new ScoreEvent(
+                user,
+                league,
+                -10,
+                ScoreEventType.CorrectWinner,
+                "Invalid negative score"
+            ));
+    }
+
+
+    [Test]
     public void NewScoreEvent_ShouldAllowDifferentScoreEventTypes()
     {
         var user = TestDataFactory.CreateUser();
@@ -156,13 +222,13 @@ public class ScoreEventTests
             user,
             league,
             25,
-            ScoreEventType.CorrectWinner,
-            "Correct prediction"
+            ScoreEventType.ExactScore,
+            "Correct exact score"
         );
 
         Assert.That(
             scoreEvent.Type,
-            Is.EqualTo(ScoreEventType.CorrectWinner)
+            Is.EqualTo(ScoreEventType.ExactScore)
         );
     }
 }

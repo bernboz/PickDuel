@@ -1,7 +1,7 @@
 using PickDuel.Application.Scoring;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Entities.History;
-using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.Entities.Standings;
 using PickDuel.Domain.Enums;
 using PickDuel.Domain.ValueObjects;
 
@@ -53,6 +53,28 @@ public static class TestDataFactory
         );
     }
 
+    /// <summary>
+    /// Creates a completed game for testing.
+    /// </summary>
+    /// <returns>
+    /// Game entity with completed scores.
+    /// </returns>
+    public static Game CreateCompletedGame()
+    {
+        var game = new Game(
+            "Clemson",
+            "Florida State",
+            DateTime.UtcNow.AddHours(-3),
+            DateTime.UtcNow.AddHours(1)
+        );
+
+        game.CompleteGame(
+            24,
+            10
+        );
+
+        return game;
+    }
 
     /// <summary>
     /// Creates a pick for the specified team and confidence multiplier.
@@ -158,6 +180,20 @@ public static class TestDataFactory
         );
     }
 
+    /// <summary>
+    /// Creates a league standing with a test user and league.
+    /// </summary>
+    /// <returns>A league standing test entity.</returns>
+    public static LeagueStanding CreateLeagueStanding()
+    {
+        var user = CreateUser();
+
+        var league = CreateLeague(user);
+
+        return new LeagueStanding(
+            user,
+            league);
+    }
 
     /// <summary>
     /// Creates a scoring context where the away team prediction is correct.
@@ -475,6 +511,164 @@ public static class TestDataFactory
             pick,
             result,
             odds
+        );
+    }
+        
+    /// <summary>
+    /// Creates a completed pick for scoring tests.
+    /// </summary>
+    /// <param name="selectedTeam">
+    /// Team selected by the user.
+    /// </param>
+    /// <param name="homeScore">
+    /// Final home team score.
+    /// </param>
+    /// <param name="awayScore">
+    /// Final away team score.
+    /// </param>
+    /// <param name="confidenceMultiplier">
+    /// Confidence multiplier applied to the pick.
+    /// </param>
+    /// <returns>
+    /// Completed pick ready for scoring.
+    /// </returns>
+    public static Pick CreateCompletedPick(
+        string selectedTeam,
+        int homeScore,
+        int awayScore,
+        int confidenceMultiplier = 1)
+    {
+        var user = CreateUser();
+
+        var league = CreateLeague(user);
+
+        var game = new Game(
+            "Clemson",
+            "Florida State",
+            DateTime.UtcNow.AddHours(-3),
+            DateTime.UtcNow.AddHours(-1)
+        );
+
+        game.CompleteGame(
+            homeScore,
+            awayScore
+        );
+
+        return CreatePick(
+            user,
+            league,
+            game,
+            selectedTeam,
+            confidenceMultiplier
+        );
+    }
+
+    /// <summary>
+    /// Creates a pick using the game's home team for testing.
+    /// </summary>
+    /// <param name="user">User making the pick.</param>
+    /// <param name="league">League containing the pick.</param>
+    /// <param name="game">Game being predicted.</param>
+    /// <param name="confidenceMultiplier">Confidence multiplier.</param>
+    /// <returns>A valid Pick entity.</returns>
+    public static Pick CreateHomePick(
+        User user,
+        League league,
+        Game game,
+        int confidenceMultiplier = 1)
+    {
+        return new Pick(
+            user,
+            league,
+            game,
+            game.HomeTeam,
+            confidenceMultiplier
+        );
+    }
+
+    /// <summary>
+    /// Creates a completed pick with an exact score prediction for scoring tests.
+    /// </summary>
+    /// <param name="selectedTeam">
+    /// Team selected by the user.
+    /// </param>
+    /// <param name="homeScore">
+    /// Actual home team score.
+    /// </param>
+    /// <param name="awayScore">
+    /// Actual away team score.
+    /// </param>
+    /// <param name="predictedHomeScore">
+    /// Predicted home team score.
+    /// </param>
+    /// <param name="predictedAwayScore">
+    /// Predicted away team score.
+    /// </param>
+    /// <param name="confidenceMultiplier">
+    /// Confidence multiplier applied to the pick.
+    /// </param>
+    /// <returns>
+    /// Completed pick containing a score prediction.
+    /// </returns>
+    public static Pick CreateCompletedPickWithScorePrediction(
+        string selectedTeam,
+        int homeScore,
+        int awayScore,
+        int predictedHomeScore,
+        int predictedAwayScore,
+        int confidenceMultiplier = 1)
+    {
+        var user = CreateUser();
+
+        var league = CreateLeague(user);
+
+        var game = new Game(
+            "Clemson",
+            "Florida State",
+            DateTime.UtcNow.AddHours(-3),
+            DateTime.UtcNow.AddHours(-1)
+        );
+
+        game.CompleteGame(
+            homeScore,
+            awayScore
+        );
+
+        var scorePrediction = new ScorePrediction(
+            predictedHomeScore,
+            predictedAwayScore
+        );
+
+        return new Pick(
+            user,
+            league,
+            game,
+            selectedTeam,
+            confidenceMultiplier,
+            scorePrediction
+        );
+    }
+
+    /// <summary>
+    /// Creates an uncompleted pick for testing scenarios where the game has not finished.
+    /// </summary>
+    /// <returns>
+    /// Pick containing a game that has not been completed.
+    /// </returns>
+    public static Pick CreateUncompletedPick()
+    {
+        var user = CreateUser();
+
+        var league = CreateLeague(user);
+
+        var game = CreateGame();
+
+        return new Pick(
+            user,
+            league,
+            game,
+            game.HomeTeam,
+            1
         );
     }
     

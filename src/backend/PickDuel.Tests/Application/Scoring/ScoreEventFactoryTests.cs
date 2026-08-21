@@ -1,9 +1,9 @@
 using NUnit.Framework;
-using PickDuel.Application.Scoring;
+using PickDuel.Application.Scoring.Factories;
 using PickDuel.Domain.Enums;
 using PickDuel.Tests.Common;
 
-namespace PickDuel.Tests.Application;
+namespace PickDuel.Tests.Application.Scoring;
 
 public class ScoreEventFactoryTests
 {

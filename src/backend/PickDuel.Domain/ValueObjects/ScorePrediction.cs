@@ -1,4 +1,4 @@
-namespace PickDuel.Domain.Entities.Predictions;
+namespace PickDuel.Domain.ValueObjects;
 
 public class ScorePrediction
 {
@@ -7,9 +7,16 @@ public class ScorePrediction
     public int AwayScore { get; private set; }
 
 
-    public ScorePrediction(
-        int homeScore,
-        int awayScore)
+    /// <summary>
+    /// Creates a predicted final score for a game.
+    /// </summary>
+    /// <param name="homeScore">
+    /// Predicted home team score.
+    /// </param>
+    /// <param name="awayScore">
+    /// Predicted away team score.
+    /// </param>
+    public ScorePrediction(int homeScore, int awayScore)
     {
         if (homeScore < 0)
         {

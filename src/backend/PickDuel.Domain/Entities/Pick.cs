@@ -1,5 +1,5 @@
 using PickDuel.Domain.Common;
-using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.ValueObjects;
 using PickDuel.Domain.ValueObjects;
 
 namespace PickDuel.Domain.Entities;
@@ -182,8 +182,17 @@ public class Pick : Entity
             );
         }
     }
-
-
+    
+    public void EnsureNotScored()
+    {
+        if (IsScored)
+        {
+            throw new InvalidOperationException(
+                "Pick has already been scored."
+            );
+        }
+    }
+    
     /// <summary>
     /// Validates the base pick information.
     /// </summary>

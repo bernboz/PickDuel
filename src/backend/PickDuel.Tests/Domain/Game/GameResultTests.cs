@@ -3,7 +3,7 @@ using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
 using PickDuel.Tests.Common;
 
-namespace PickDuel.Tests.Domain;
+namespace PickDuel.Tests.Domain.Game;
 
 public class GameResultTests
 {
@@ -59,7 +59,7 @@ public class GameResultTests
     [Test]
     public void NewGameResult_ShouldInitializeCorrectly_WhenGameIsTied()
     {
-        var game = new Game(
+        var game = new PickDuel.Domain.Entities.Game(
             "Packers",
             "Vikings",
             DateTime.UtcNow.AddDays(1),

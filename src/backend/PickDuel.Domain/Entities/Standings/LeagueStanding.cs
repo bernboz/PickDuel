@@ -1,6 +1,6 @@
 using PickDuel.Domain.Common;
 
-namespace PickDuel.Domain.Entities;
+namespace PickDuel.Domain.Entities.Standings;
 
 public class LeagueStanding : Entity
 {

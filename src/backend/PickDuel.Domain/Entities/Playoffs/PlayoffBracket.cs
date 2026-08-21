@@ -1,4 +1,5 @@
 using PickDuel.Domain.Common;
+using PickDuel.Domain.Entities.Standings;
 
 namespace PickDuel.Domain.Entities.Playoffs;
 

@@ -4,10 +4,6 @@ using PickDuel.Application.Common;
 
 namespace PickDuel.Application.Users;
 
-/// <summary>
-/// Provides application workflows for creating,
-/// retrieving, updating, and deleting users.
-/// </summary>
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;

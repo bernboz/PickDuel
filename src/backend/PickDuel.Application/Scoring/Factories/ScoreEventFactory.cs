@@ -1,7 +1,7 @@
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
 
-namespace PickDuel.Application.Scoring;
+namespace PickDuel.Application.Scoring.Factories;
 
 public class ScoreEventFactory : IScoreEventFactory
 {
@@ -23,7 +23,8 @@ public class ScoreEventFactory : IScoreEventFactory
             context.Pick.League,
             points,
             type,
-            description
+            description,
+            context.Pick
         );
     }
 

@@ -1,6 +1,7 @@
+using PickDuel.Domain.Entities.Standings;
 using PickDuel.Domain.Entities;
 
-namespace PickDuel.Application.Scoring;
+namespace PickDuel.Application.Scoring.Interfaces;
 
 public interface IPickResultProcessor
 {

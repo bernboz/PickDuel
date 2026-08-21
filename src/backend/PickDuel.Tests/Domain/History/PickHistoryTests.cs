@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Entities.History;
-using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.ValueObjects;
 using PickDuel.Domain.Enums;
 using PickDuel.Tests.Common;
 

@@ -15,23 +15,21 @@ public class ScoreEvent : Entity
 
     public string Description { get; private set; }
 
+    public Pick? Pick { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
 
 
     /// <summary>
-    /// Creates a score event representing the result of a completed pick evaluation.
+    /// Creates a score event representing a scoring change within a league.
     /// </summary>
     /// <param name="user">User receiving the score event.</param>
     /// <param name="league">League where the event occurred.</param>
     /// <param name="points">Points awarded or deducted.</param>
     /// <param name="type">Category of scoring event.</param>
     /// <param name="description">Human-readable explanation of the event.</param>
-    public ScoreEvent(
-        User user,
-        League league,
-        int points,
-        ScoreEventType type,
-        string description)
+    /// <param name="pick">Pick that generated the score event, if applicable.</param>
+    public ScoreEvent(User user, League league, int points, ScoreEventType type, string description, Pick? pick = null)
     {
         ArgumentNullException.ThrowIfNull(user);
         ArgumentNullException.ThrowIfNull(league);
@@ -43,7 +41,7 @@ public class ScoreEvent : Entity
                 nameof(description)
             );
         }
-        
+
         if (type == ScoreEventType.Penalty && points >= 0)
         {
             throw new ArgumentException(
@@ -51,7 +49,7 @@ public class ScoreEvent : Entity
                 nameof(points)
             );
         }
-        
+
         if (type != ScoreEventType.Penalty && points < 0)
         {
             throw new ArgumentException(
@@ -65,6 +63,7 @@ public class ScoreEvent : Entity
         Points = points;
         Type = type;
         Description = description;
+        Pick = pick;
         CreatedAt = DateTime.UtcNow;
     }
 }

@@ -1,9 +1,13 @@
 using NSubstitute;
 using NUnit.Framework;
 using PickDuel.Application.Scoring;
+using PickDuel.Application.Scoring.Factories;
 using PickDuel.Domain.Entities;
 using PickDuel.Domain.Enums;
 using PickDuel.Tests.Common;
+using PickDuel.Application.Scoring.Services;
+using PickDuel.Domain.Entities.Standings;
+using PickDuel.Infrastructure.Data;
 
 namespace PickDuel.Tests.Application;
 
@@ -274,6 +278,15 @@ public class PickResultProcessorTests
         );
     }
 
+    /// <summary>
+    /// Creates a PickResultProcessor with a configured scoring service.
+    /// </summary>
+    /// <param name="points">
+    /// Points returned by the scoring service rules.
+    /// </param>
+    /// <returns>
+    /// PickResultProcessor configured for testing.
+    /// </returns>
     private static PickResultProcessor CreateProcessor(int points)
     {
         return new PickResultProcessor(
@@ -283,6 +296,15 @@ public class PickResultProcessorTests
     }
 
 
+    /// <summary>
+    /// Creates a PickScoringService with a mocked scoring rule factory.
+    /// </summary>
+    /// <param name="points">
+    /// Points returned by the mocked scoring rule.
+    /// </param>
+    /// <returns>
+    /// PickScoringService configured with test scoring behavior.
+    /// </returns>
     private static PickScoringService CreateScoringService(int points)
     {
         var rule = Substitute.For<IPickScoringRule>();
@@ -290,12 +312,9 @@ public class PickResultProcessorTests
         rule.CalculatePoints(Arg.Any<PickEvaluationContext>())
             .Returns(points);
 
-        var factory =
-            Substitute.For<IScoringRuleFactory>();
+        var factory = Substitute.For<IScoringRuleFactory>();
 
-        factory.GetRules(
-                Arg.Any<PickEvaluationContext>()
-            )
+        factory.GetRules(Arg.Any<PickEvaluationContext>())
             .Returns(new[] { rule });
 
 
@@ -303,6 +322,12 @@ public class PickResultProcessorTests
     }
 
 
+    /// <summary>
+    /// Creates a league standing for testing.
+    /// </summary>
+    /// <returns>
+    /// New LeagueStanding entity with test user and league.
+    /// </returns>
     private static LeagueStanding CreateStanding()
     {
         var user = TestDataFactory.CreateUser();
@@ -314,18 +339,41 @@ public class PickResultProcessorTests
     }
 
 
-    private static ScoreEvent CreateScoreEvent(
-        int points,
-        ScoreEventType type)
+    /// <summary>
+    /// Creates a score event for testing.
+    /// </summary>
+    /// <param name="points">
+    /// Points assigned to the score event.
+    /// </param>
+    /// <param name="type">
+    /// Type of scoring event created.
+    /// </param>
+    /// <returns>
+    /// ScoreEvent configured with test data.
+    /// </returns>
+    private static ScoreEvent CreateScoreEvent(int points, ScoreEventType type)
     {
         var user = TestDataFactory.CreateUser();
 
+        var league = TestDataFactory.CreateLeague(user);
+
+        var game = TestDataFactory.CreateGame();
+
+        var pick = TestDataFactory.CreatePick(
+            user,
+            league,
+            game,
+            game.HomeTeam,
+            1
+        );
+
         return new ScoreEvent(
             user,
-            TestDataFactory.CreateLeague(user),
+            league,
             points,
             type,
-            "Test score event"
+            "Test score event",
+            pick
         );
     }
 }

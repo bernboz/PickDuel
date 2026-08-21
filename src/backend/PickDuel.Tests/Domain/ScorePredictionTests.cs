@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using PickDuel.Domain.Entities.Predictions;
 using PickDuel.Domain.ValueObjects;
 
 

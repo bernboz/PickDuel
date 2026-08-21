@@ -1,9 +1,10 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
+using PickDuel.Domain.Entities.Standings;
 using PickDuel.Domain.Entities.Matchups;
 using PickDuel.Tests.Common;
 
-namespace PickDuel.Tests.Domain;
+namespace PickDuel.Tests.Domain.Standings;
 
 public class SeasonStandingsTests
 {

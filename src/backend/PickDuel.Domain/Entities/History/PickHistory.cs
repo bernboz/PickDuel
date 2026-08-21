@@ -1,5 +1,5 @@
 using PickDuel.Domain.Common;
-using PickDuel.Domain.Entities.Predictions;
+using PickDuel.Domain.ValueObjects;
 using PickDuel.Domain.Enums;
 
 namespace PickDuel.Domain.Entities.History;

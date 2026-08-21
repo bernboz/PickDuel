@@ -2,7 +2,7 @@ using PickDuel.Domain.Common;
 using PickDuel.Domain.Entities.Matchups;
 using PickDuel.Domain.Enums;
 
-namespace PickDuel.Domain.Entities;
+namespace PickDuel.Domain.Entities.Standings;
 
 public class SeasonStandings : Entity
 {

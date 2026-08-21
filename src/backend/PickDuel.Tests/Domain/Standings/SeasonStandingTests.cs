@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using PickDuel.Domain.Entities;
+using PickDuel.Domain.Entities.Standings;
 using PickDuel.Domain.Entities.History;
 using PickDuel.Domain.Entities.Matchups;
 using PickDuel.Domain.Enums;

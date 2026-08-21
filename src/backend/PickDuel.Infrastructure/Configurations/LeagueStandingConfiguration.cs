@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PickDuel.Domain.Entities;
+using PickDuel.Domain.Entities.Standings;
 
 namespace PickDuel.Infrastructure.Configurations;
 
