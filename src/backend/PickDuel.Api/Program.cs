@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using PickDuel.Infrastructure.Data;
 using PickDuel.Infrastructure.Repositories;
 using PickDuel.Application.Repositories.Interfaces;
+using PickDuel.Application.Mappers.Interfaces;
+using PickDuel.Application.Mappers;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +29,9 @@ builder.Services.AddScoped<
 
 // OpenAPI
 builder.Services.AddOpenApi();
+
+//UserMapper registration
+builder.Services.AddScoped<IUserMapper, UserMapper>();
 
 
 var app = builder.Build();
